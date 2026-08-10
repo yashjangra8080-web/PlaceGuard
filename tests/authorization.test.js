@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest'
+import { can } from '../src/domain/authorization'
+describe('authorization', () => { it('does not allow a student to manage a drive or write audit events', () => { expect(can('student', 'manage:drive', { ownerId: 'a', actorId: 'a' })).toBe(false); expect(can('student', 'write:audit')).toBe(false) }); it('prevents a coordinator from approving their own proposal', () => expect(can('coordinator', 'approve:proposal', { actorId: 'a', proposalCreatorId: 'a' })).toBe(false)); it('allows only T&P Head to approve another actor proposal', () => expect(can('tnp_head', 'approve:proposal', { actorId: 'a', proposalCreatorId: 'b' })).toBe(true)) })

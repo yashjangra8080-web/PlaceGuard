@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest'
+import { ensureBeforeDeadline, proposalDecision } from '../src/domain/workflow'
+describe('deadline governance', () => { it('allows action before deadline and blocks after it', () => { expect(ensureBeforeDeadline('2030-01-01', new Date('2029-12-31'))).toBe(true); expect(ensureBeforeDeadline('2030-01-01', new Date('2030-01-02'))).toBe(false) }); it('enforces separation of duties', () => expect(proposalDecision({ proposal: { proposed_by: 'same', deadline: '2030-01-01' }, reviewerId: 'same', reviewerRole: 'tnp_head', now: new Date('2029-01-01') }).allowed).toBe(false)) })
