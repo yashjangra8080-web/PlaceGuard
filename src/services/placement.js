@@ -14,7 +14,13 @@ export async function getDashboardData(profile) {
   if (activityError) throw activityError
   return { metrics, activity, integrity: integrity.data }
 }
-export async function applyToDrive(driveId) { requireClient(); const { data, error } = await supabase.rpc('apply_to_drive', { p_drive: driveId }); if (error) throw error; return data }
+export async function applyToDrive(driveId) {
+  requireClient()
+  const { data, error } = await supabase.rpc('apply_to_drive_result', { p_drive: driveId })
+  if (error) throw error
+  if (!data?.ok) throw new Error(data?.message || 'Your application could not be submitted.')
+  return data.applicationId
+}
 export async function proposeShortlistChange(driveId, studentId, action, reason) { requireClient(); const { data, error } = await supabase.rpc('create_shortlist_proposal', { p_drive: driveId, p_student: studentId, p_action: action, p_reason: reason }); if (error) throw error; return data }
 export async function reviewProposal(proposalId, decision, reason) { requireClient(); const { error } = await supabase.rpc('review_proposal', { p_proposal: proposalId, p_decision: decision, p_reason: reason }); if (error) throw error }
 export async function verifyAuditIntegrity() { requireClient(); const { data, error } = await supabase.rpc('verify_audit_chain'); if (error) throw error; return data }

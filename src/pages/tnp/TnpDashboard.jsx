@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { getPendingProposals, getAnomalyAlerts } from '../../services/drives'
+import { getPendingProposals, getAnomalyAlerts, getGovernanceDrives } from '../../services/drives'
 import { verifyAuditIntegrity } from '../../services/placement'
 import { useDashboardData } from '../../hooks/useDashboardData'
 
@@ -12,6 +12,7 @@ export default function TnpDashboard() {
   const [anomalyCount, setAnomalyCount] = useState(null)
   const [integrity, setIntegrity] = useState(null)
   const [anomalies, setAnomalies] = useState([])
+  const [drives, setDrives] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -19,16 +20,18 @@ export default function TnpDashboard() {
     let live = true
     async function load() {
       try {
-        const [pending, anom, integ] = await Promise.all([
+        const [pending, anom, integ, driveData] = await Promise.all([
           getPendingProposals(),
           getAnomalyAlerts(),
           verifyAuditIntegrity().catch(() => null),
+          getGovernanceDrives(),
         ])
         if (!live) return
         setPendingCount(pending.length)
         setAnomalyCount(anom.length)
         setAnomalies(anom.slice(0, 5))
         setIntegrity(integ)
+        setDrives(driveData)
       } catch (err) {
         if (live) setError(err.message)
       } finally {
@@ -100,6 +103,30 @@ export default function TnpDashboard() {
               <strong>Audit chain integrity failure.</strong> The hash chain is broken at commit #{integrity.brokenAt}. This may indicate tampered historical records. Contact your database administrator immediately.
             </div>
           )}
+
+          <article className="panel" style={{ marginBottom: '1rem' }}>
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow">SHORTLIST LOCKING</span>
+                <h3>Drives ready for governance review</h3>
+              </div>
+            </div>
+            {drives.length === 0 ? (
+              <p className="empty-copy">No open or closed drives are available for shortlist review.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: '.65rem', marginTop: '.75rem' }}>
+                {drives.map((drive) => (
+                  <div className="candidate-row" key={drive.id}>
+                    <div>
+                      <strong>{drive.title}</strong>
+                      <small>{drive.companies?.company_name || 'Company'} · {drive.role_name} · Deadline: {new Date(drive.deadline).toLocaleString()}</small>
+                    </div>
+                    <Link className="secondary-button" to={`/tnp/drives/${drive.id}`}>Review shortlist →</Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </article>
 
           <div className="content-grid">
             <article className="panel">

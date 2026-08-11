@@ -60,6 +60,7 @@ export default function DriveDetail() {
   }, [driveId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const doAction = async (action) => {
+    if (action === 'lock' && !window.confirm('Lock this shortlist? This prevents further shortlist changes.')) return
     setActionBusy(true)
     setActionError(null)
     try {
@@ -85,6 +86,8 @@ export default function DriveDetail() {
   const rules = Array.isArray(drive.eligibility_rules) ? drive.eligibility_rules[0] : drive.eligibility_rules
   const canPublish = drive.status === 'draft' && profile.role === 'company'
   const canLock = drive.status === 'open' && profile.role === 'tnp_head'
+  const backTo = profile.role === 'tnp_head' ? '/tnp' : '/company'
+  const backLabel = profile.role === 'tnp_head' ? '← Integrity dashboard' : '← All drives'
 
   return (
     <section>
@@ -95,7 +98,7 @@ export default function DriveDetail() {
           <p>{drive.role_name} · Deadline: {new Date(drive.deadline).toLocaleString()}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', alignItems: 'flex-end' }}>
-          <Link className="secondary-button" to="/company">← All drives</Link>
+          <Link className="secondary-button" to={backTo}>{backLabel}</Link>
           <span className={`badge badge-${drive.status}`}>{drive.status}</span>
         </div>
       </div>

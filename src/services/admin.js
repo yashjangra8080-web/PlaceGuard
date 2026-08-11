@@ -14,10 +14,10 @@ export async function getAllProfiles() {
 
 export async function updateProfileStatus(profileId, isActive) {
   req()
-  const { error } = await supabase
-    .from('profiles')
-    .update({ is_active: isActive })
-    .eq('id', profileId)
+  const { error } = await supabase.rpc('set_profile_active', {
+    p_profile_id: profileId,
+    p_is_active: isActive,
+  })
   if (error) throw error
 }
 
@@ -32,13 +32,13 @@ export async function getMyAccessRequests(adminId) {
   return data ?? []
 }
 
-export async function createAccessRequest(adminId, { resourceType, resourceId, reason }) {
+export async function createAccessRequest({ resourceType, resourceId, reason }) {
   req()
-  const { data, error } = await supabase
-    .from('admin_access_requests')
-    .insert({ admin_id: adminId, resource_type: resourceType, resource_id: resourceId || null, reason })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_admin_access_request', {
+    p_resource_type: resourceType,
+    p_resource_id: resourceId || null,
+    p_reason: reason,
+  })
   if (error) throw error
   return data
 }

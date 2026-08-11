@@ -15,6 +15,17 @@ export async function getOpenDrives() {
   return data ?? []
 }
 
+export async function getGovernanceDrives() {
+  req()
+  const { data, error } = await supabase
+    .from('drives')
+    .select('id, title, role_name, deadline, status, companies(company_name)')
+    .in('status', ['open', 'closed'])
+    .order('deadline', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
 // ── Student profile / applications ───────────────────────────────────────────
 
 export async function getStudentRecord(profileId) {
@@ -112,30 +123,18 @@ export async function getDriveAuditTrail(driveId) {
 
 // ── Drive write operations (company) ─────────────────────────────────────────
 
-export async function createDrive({ companyId, profileId, title, description, roleName, deadline }) {
+export async function createDriveWithRules({ title, description, roleName, deadline, minCgpa, allowedBranches, maxBacklogs, requiredSkills }) {
   req()
-  const { data, error } = await supabase
-    .from('drives')
-    .insert({ company_id: companyId, title, description, role_name: roleName, deadline, created_by: profileId })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-export async function createEligibilityRules(driveId, { minCgpa, allowedBranches, maxBacklogs, requiredSkills }) {
-  req()
-  const { data, error } = await supabase
-    .from('eligibility_rules')
-    .insert({
-      drive_id: driveId,
-      min_cgpa: minCgpa,
-      allowed_branches: allowedBranches,
-      max_backlogs: maxBacklogs,
-      required_skills: requiredSkills,
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_drive_with_rules', {
+    p_title: title,
+    p_description: description,
+    p_role_name: roleName,
+    p_deadline: deadline,
+    p_min_cgpa: minCgpa,
+    p_allowed_branches: allowedBranches,
+    p_max_backlogs: maxBacklogs,
+    p_required_skills: requiredSkills,
+  })
   if (error) throw error
   return data
 }

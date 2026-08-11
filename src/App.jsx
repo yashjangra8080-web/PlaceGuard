@@ -48,6 +48,7 @@ export default function App() {
         {/* T&P Head */}
         <Route path="/tnp" element={<ProtectedRoute roles={['tnp_head']}><Shell><TnpDashboard /></Shell></ProtectedRoute>} />
         <Route path="/tnp/approvals" element={<ProtectedRoute roles={['tnp_head']}><Shell><Approvals /></Shell></ProtectedRoute>} />
+        <Route path="/tnp/drives/:driveId" element={<ProtectedRoute roles={['tnp_head']}><Shell><DriveDetail /></Shell></ProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin" element={<ProtectedRoute roles={['admin']}><Shell><AdminDashboard /></Shell></ProtectedRoute>} />

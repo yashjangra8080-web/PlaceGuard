@@ -56,12 +56,13 @@ export default function AdminDashboard() {
     setReqError(null)
     setReqSuccess(false)
     try {
-      const created = await createAccessRequest(profile.id, {
+      await createAccessRequest({
         resourceType: reqForm.resourceType,
         resourceId: reqForm.resourceId || undefined,
         reason: reqForm.reason,
       })
-      setRequests((prev) => [created, ...prev])
+      const created = await getMyAccessRequests(profile.id)
+      setRequests(created)
       setReqForm({ resourceType: '', resourceId: '', reason: '' })
       setShowReqForm(false)
       setReqSuccess(true)

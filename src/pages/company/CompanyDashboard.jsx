@@ -4,8 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import {
   getCompanyRecord,
   getCompanyDrives,
-  createDrive,
-  createEligibilityRules,
+  createDriveWithRules,
   publishDrive,
 } from '../../services/drives'
 
@@ -82,15 +81,11 @@ export default function CompanyDashboard() {
       if (branches.length === 0) throw new Error('At least one allowed branch is required.')
       if (!form.deadline) throw new Error('Deadline is required.')
 
-      const newDrive = await createDrive({
-        companyId: company.id,
-        profileId: profile.id,
+      await createDriveWithRules({
         title: form.title,
         description: form.description,
         roleName: form.roleName,
         deadline: new Date(form.deadline).toISOString(),
-      })
-      await createEligibilityRules(newDrive.id, {
         minCgpa: parseFloat(form.minCgpa),
         maxBacklogs: parseInt(form.maxBacklogs, 10),
         allowedBranches: branches,
