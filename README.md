@@ -18,7 +18,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Set only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the frontend environment. Create a Supabase project, then apply migrations in chronological order and seed locally with `supabase/seed.sql`. The seed contains fictional accounts with the documented demo password and must not be used in production.
+Set only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the frontend environment. Create a Supabase project, then apply migrations in chronological order and seed locally with `supabase/seed.sql`. The seed contains fictional accounts with the documented demo password and must not be used in production.
 
 Deploy the edge function with the Supabase CLI and configure `OPENAI_API_KEY` only as an edge-function secret. `SUPABASE_SERVICE_ROLE_KEY` is supplied to edge functions by Supabase and must never be added to `.env` or Vercel.
 
