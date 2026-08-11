@@ -30,8 +30,9 @@ export function AuthProvider({ children }) {
   }, [loadProfile])
   const signIn = async (email, password) => {
     if (!supabase) throw new Error('Supabase is not configured for this deployment.')
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) throw signInError
+    return signInData
   }
   const signOut = () => supabase?.auth.signOut()
   const value = useMemo(() => ({ session, profile, loading, error, isConfigured: isSupabaseConfigured, signIn, signOut }), [session, profile, loading, error])
