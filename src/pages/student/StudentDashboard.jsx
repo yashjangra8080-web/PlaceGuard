@@ -111,8 +111,26 @@ export default function StudentDashboard() {
                   </dl>
                 )}
 
+                {/* Recruitment pipeline */}
+                {Array.isArray(drive.drive_rounds) && drive.drive_rounds.length > 0 && (
+                  <div className="round-pipeline">
+                    <span className="round-pipeline-label">Recruitment rounds:</span>
+                    <div className="round-pipeline-track">
+                      {[...drive.drive_rounds]
+                        .sort((a, b) => a.round_number - b.round_number)
+                        .map((r, i, arr) => (
+                          <span key={r.round_number} className="round-pipeline-step">
+                            <span className="round-pipeline-num">{r.round_number}</span>
+                            <span className="round-pipeline-name">{r.name}</span>
+                            {i < arr.length - 1 && <span className="round-pipeline-arrow">→</span>}
+                          </span>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 {drive.description && (
-                  <p style={{ fontSize: '.85rem', color: '#637089', margin: 0 }}>{drive.description}</p>
+                  <p style={{ fontSize: '.85rem', color: '#637089', margin: '.5rem 0 0' }}>{drive.description}</p>
                 )}
 
                 <div className="drive-card-footer">

@@ -1,49 +1,70 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
   getDriveDetail,
   getDriveApplicantCounts,
-  getDriveApplications,
   getDriveAuditTrail,
   publishDrive,
   lockShortlist,
 } from '../../services/drives'
+import { getDriveApplicants, getDriveRounds } from '../../services/rounds'
 import { verifyAuditIntegrity } from '../../services/placement'
+import RoundProgressList from '../../components/rounds/RoundProgressList'
+import EvaluateRoundModal from '../../components/rounds/EvaluateRoundModal'
+
+const APP_STATUS_COLORS = {
+  ELIGIBLE:    '#0369a1',
+  SELECTED:    '#146647',
+  REJECTED:    '#a3322c',
+  SHORTLISTED: '#6d28d9',
+  APPLIED:     '#637089',
+}
 
 export default function DriveDetail() {
   const { driveId } = useParams()
   const { profile } = useAuth()
   const [drive, setDrive] = useState(null)
   const [counts, setCounts] = useState(null)
-  const [applications, setApplications] = useState([])
+  const [applicants, setApplicants] = useState([])
+  const [rounds, setRounds] = useState([])
   const [auditLog, setAuditLog] = useState([])
   const [integrity, setIntegrity] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [actionBusy, setActionBusy] = useState(false)
   const [actionError, setActionError] = useState(null)
+  const [expandedApp, setExpandedApp] = useState(null)
+  const [evalTarget, setEvalTarget] = useState(null) // { applicationRound, round, studentName }
+  const [tab, setTab] = useState('applicants') // 'applicants' | 'rounds' | 'audit'
 
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [driveData, countsData, appsData, auditData] = await Promise.all([
+      const [driveData, countsData, auditData, roundsData] = await Promise.all([
         getDriveDetail(driveId),
         getDriveApplicantCounts(driveId),
-        getDriveApplications(driveId),
         getDriveAuditTrail(driveId),
+        getDriveRounds(driveId),
       ])
       setDrive(driveData)
       setCounts(countsData)
-      setApplications(appsData)
       setAuditLog(auditData)
-      // Verify chain for company users
+      setRounds(roundsData)
+
+      // Load applicants with round status (company/staff only)
+      try {
+        const apps = await getDriveApplicants(driveId)
+        setApplicants(apps ?? [])
+      } catch {
+        setApplicants([])
+      }
+
       try {
         const integ = await verifyAuditIntegrity()
         setIntegrity(integ)
       } catch {
-        // Non-fatal: integrity check may fail if no commits yet
         setIntegrity(null)
       }
     } catch (err) {
@@ -51,16 +72,16 @@ export default function DriveDetail() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [driveId])
 
   useEffect(() => {
     let live = true
     loadAll().then(() => !live && undefined)
     return () => { live = false }
-  }, [driveId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadAll])
 
   const doAction = async (action) => {
-    if (action === 'lock' && !window.confirm('Lock this shortlist? This prevents further shortlist changes.')) return
+    if (action === 'lock' && !window.confirm('Lock this shortlist? This cannot be undone.')) return
     setActionBusy(true)
     setActionError(null)
     try {
@@ -78,7 +99,7 @@ export default function DriveDetail() {
   if (error) return (
     <div className="page-state">
       <div className="alert error">{error}</div>
-      <Link className="secondary-button" to="/company" style={{ marginTop: '1rem' }}>← Back to drives</Link>
+      <Link className="secondary-button" to={backTo} style={{ marginTop: '1rem' }}>← Back</Link>
     </div>
   )
   if (!drive) return null
@@ -89,8 +110,12 @@ export default function DriveDetail() {
   const backTo = profile.role === 'tnp_head' ? '/tnp' : '/company'
   const backLabel = profile.role === 'tnp_head' ? '← Integrity dashboard' : '← All drives'
 
+  const selectedCount = applicants.filter((a) => a.application_status === 'SELECTED').length
+  const rejectedCount = applicants.filter((a) => a.application_status === 'REJECTED').length
+
   return (
     <section>
+      {/* Header */}
       <div className="page-header">
         <div>
           <span className="eyebrow">{drive.companies?.company_name || 'COMPANY'} · DRIVE DETAIL</span>
@@ -124,19 +149,24 @@ export default function DriveDetail() {
       {counts && (
         <div className="metric-grid" style={{ marginBottom: '1rem' }}>
           <article className="metric">
-            <span>Total applications</span>
+            <span>Applications</span>
             <strong>{counts.total}</strong>
-            <small>Authorized live data</small>
+            <small>Total submitted</small>
           </article>
           <article className="metric">
-            <span>Eligible candidates</span>
+            <span>Eligible</span>
             <strong>{counts.eligible}</strong>
-            <small>Passed all eligibility rules</small>
+            <small>Passed all rules</small>
           </article>
           <article className="metric">
-            <span>Shortlisted</span>
-            <strong>{counts.shortlisted}</strong>
-            <small>Approved proposals</small>
+            <span>Selected</span>
+            <strong>{selectedCount}</strong>
+            <small>All rounds passed</small>
+          </article>
+          <article className="metric">
+            <span>Rejected</span>
+            <strong>{rejectedCount}</strong>
+            <small>Failed a round</small>
           </article>
           {integrity && (
             <article className="metric">
@@ -154,58 +184,109 @@ export default function DriveDetail() {
         </div>
       )}
 
-      <div className="content-grid">
-        {/* Applicants panel */}
-        <article className="panel">
+      {/* Tabs */}
+      <div className="tab-bar" style={{ marginBottom: '1rem' }}>
+        {[['applicants', 'Applicants'], ['rounds', 'Round Config'], ['audit', 'Audit Trail']].map(([key, label]) => (
+          <button
+            key={key}
+            className={`tab-btn${tab === key ? ' active' : ''}`}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── TAB: Applicants ── */}
+      {tab === 'applicants' && (
+        <div>
+          {applicants.length === 0 ? (
+            <p className="empty-copy">No applicants yet.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '.65rem' }}>
+              {applicants.map((app) => {
+                const isOpen = expandedApp === app.application_id
+                const appRounds = app.rounds ?? []
+                const activeRound = appRounds.find((r) => r.status === 'PENDING')
+
+                return (
+                  <div key={app.application_id} className="panel" style={{ padding: '1rem' }}>
+                    {/* Student row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 600, fontSize: '.95rem' }}>{app.student_name}</div>
+                        <div style={{ fontSize: '.82rem', color: '#637089' }}>
+                          {app.roll_number} · {app.branch} · CGPA {app.cgpa}
+                        </div>
+                      </div>
+                      <span
+                        className="badge"
+                        style={{
+                          background: (APP_STATUS_COLORS[app.application_status] ?? '#637089') + '18',
+                          color: APP_STATUS_COLORS[app.application_status] ?? '#637089',
+                        }}
+                      >
+                        {app.application_status}
+                      </span>
+                      {activeRound && (
+                        <span style={{ fontSize: '.8rem', color: '#0369a1' }}>
+                          Round {activeRound.round_number}: {activeRound.name}
+                        </span>
+                      )}
+                      <button
+                        className="secondary-button"
+                        style={{ fontSize: '.8rem', padding: '.3rem .75rem' }}
+                        onClick={() => setExpandedApp(isOpen ? null : app.application_id)}
+                      >
+                        {isOpen ? 'Collapse ▲' : 'View rounds ▼'}
+                      </button>
+                    </div>
+
+                    {/* Expanded rounds */}
+                    {isOpen && (
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+                        <RoundProgressList
+                          rounds={appRounds.map((r) => ({ ...r, round_number: r.round_number }))}
+                          studentView={false}
+                          busy={actionBusy}
+                          onEvaluate={(roundInfo) => {
+                            setEvalTarget({
+                              applicationRound: roundInfo,
+                              round: roundInfo,
+                              studentName: app.student_name,
+                            })
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB: Round Config ── */}
+      {tab === 'rounds' && (
+        <div className="panel">
           <div className="panel-heading">
             <div>
-              <span className="eyebrow">APPLICANTS</span>
-              <h3>Application records</h3>
+              <span className="eyebrow">ROUND CONFIGURATION</span>
+              <h3>Recruitment pipeline for this drive</h3>
             </div>
+            {drive.status === 'draft' && profile.role === 'company' && (
+              <span className="badge" style={{ background: '#fffbeb', color: '#7a5c00' }}>
+                Draft — rounds can still be added
+              </span>
+            )}
           </div>
-          <p style={{ fontSize: '.82rem', color: '#637089', margin: '0 0 .75rem' }}>
-            Student identity is protected by RLS. Application IDs and eligibility results are shown.
-          </p>
-          {applications.length === 0 ? (
-            <p className="empty-copy">No applications yet.</p>
-          ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Application ID</th>
-                  <th>Status</th>
-                  <th>Eligibility</th>
-                  <th>Applied</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app) => {
-                  const res = Array.isArray(app.eligibility_results) ? app.eligibility_results[0] : app.eligibility_results
-                  return (
-                    <tr key={app.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: '.78rem', color: '#637089' }}>
-                        {app.id.slice(0, 8)}…
-                      </td>
-                      <td><span className={`badge badge-${app.status}`}>{app.status}</span></td>
-                      <td>
-                        {res ? (
-                          res.eligible
-                            ? <span className="badge badge-ELIGIBLE">Pass</span>
-                            : <span className="badge badge-INELIGIBLE">Fail ({(res.failed_rules ?? []).length} rules)</span>
-                        ) : '—'}
-                      </td>
-                      <td style={{ fontSize: '.82rem', color: '#637089' }}>
-                        {new Date(app.applied_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </article>
+          <RoundProgressList rounds={rounds.map((r) => ({ ...r, status: r.status ?? 'PENDING' }))} studentView={false} />
+        </div>
+      )}
 
-        {/* Eligibility rules + Audit trail */}
+      {/* ── TAB: Audit Trail ── */}
+      {tab === 'audit' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {rules && (
             <article className="panel">
@@ -229,7 +310,6 @@ export default function DriveDetail() {
               </dl>
             </article>
           )}
-
           <article className="panel">
             <div className="panel-heading">
               <div>
@@ -250,9 +330,7 @@ export default function DriveDetail() {
                   <li key={commit.id}>
                     <div>
                       <b>{commit.action_type}</b>
-                      <span>
-                        {commit.reason || commit.status} · #{commit.sequence_number} · {new Date(commit.created_at).toLocaleString()}
-                      </span>
+                      <span>{commit.reason || commit.status} · #{commit.sequence_number} · {new Date(commit.created_at).toLocaleString()}</span>
                     </div>
                     <span className={`status ${commit.status === 'SUCCESS' ? 'ok' : 'danger'}`}>
                       {commit.status}
@@ -263,7 +341,21 @@ export default function DriveDetail() {
             )}
           </article>
         </div>
-      </div>
+      )}
+
+      {/* Evaluation modal */}
+      {evalTarget && (
+        <EvaluateRoundModal
+          applicationRound={evalTarget.applicationRound}
+          round={evalTarget.round}
+          studentName={evalTarget.studentName}
+          onClose={() => setEvalTarget(null)}
+          onSaved={async () => {
+            setEvalTarget(null)
+            await loadAll()
+          }}
+        />
+      )}
     </section>
   )
 }

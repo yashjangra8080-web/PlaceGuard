@@ -8,7 +8,7 @@ export async function getOpenDrives() {
   req()
   const { data, error } = await supabase
     .from('drives')
-    .select('id, title, description, role_name, deadline, status, companies(company_name), eligibility_rules(min_cgpa, max_backlogs, allowed_branches, required_skills)')
+    .select('id, title, description, role_name, deadline, status, companies(company_name), eligibility_rules(min_cgpa, max_backlogs, allowed_branches, required_skills), drive_rounds(round_number, name, round_type)')
     .eq('status', 'open')
     .order('deadline', { ascending: true })
   if (error) throw error
