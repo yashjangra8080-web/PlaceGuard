@@ -5,3 +5,6 @@ dist/
 .env.*.local
 coverage/
 supabase/.temp/
+# Dev-only credential/admin scripts — never commit
+supabase/create_stage_c_auth.ps1
+supabase/seed_stage_c_check.sql
