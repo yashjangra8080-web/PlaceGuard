@@ -74,6 +74,13 @@ export async function getCompanyDrives(companyId) {
   return data ?? []
 }
 
+export async function getCompanyRecruitmentMetrics() {
+  req()
+  const { data, error } = await supabase.rpc('get_company_recruitment_metrics')
+  if (error) throw error
+  return data ?? { drives: 0, open_drives: 0, applications: 0, in_assessment: 0, shortlisted: 0, selected: 0, rejected: 0 }
+}
+
 export async function getDriveDetail(driveId) {
   req()
   const { data, error } = await supabase

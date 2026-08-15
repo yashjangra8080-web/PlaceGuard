@@ -1,9 +1,130 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getStudentRecord, getOpenDrives, getStudentApplications } from '../../services/drives'
+import { getMyApplicationRounds } from '../../services/rounds'
+import { getAssessmentForRound } from '../../services/assessments'
 import { applyToDrive } from '../../services/placement'
 
+// ── Test Queue ────────────────────────────────────────────────────────────────
+// Discovers all PENDING rounds across the student's applications and checks
+// each for an active assessment. Shows a compact action bar if tests exist.
+function TestQueue({ studentId }) {
+  const navigate = useNavigate()
+  const [items, setItems] = useState(null)   // null=loading
+
+  useEffect(() => {
+    let live = true
+    async function load() {
+      try {
+        // Get applications
+        const apps = await getStudentApplications(studentId)
+        if (!live || !apps.length) { if (live) setItems([]); return }
+
+        // For each app, fetch rounds, filter PENDING, check assessment
+        const results = []
+        await Promise.all(apps.map(async (app) => {
+          try {
+            const rounds = await getMyApplicationRounds(app.id)
+            const pending = rounds.filter(r => r.status === 'PENDING')
+            await Promise.all(pending.map(async (r) => {
+              try {
+                const asmt = await getAssessmentForRound(r.round_id)
+                if (!asmt || !asmt.is_active) return
+                results.push({
+                  roundId: r.round_id,
+                  roundName: r.name,
+                  driveName: app.drives?.title || '—',
+                  companyName: app.drives?.companies?.company_name || '—',
+                  assessmentId: asmt.assessment_id,
+                  durationMinutes: asmt.duration_minutes,
+                  totalQuestions: asmt.total_questions,
+                  existingStatus: asmt.existing_attempt_status,
+                  existingAttemptId: asmt.existing_attempt_id,
+                  resultId: asmt.result_id,
+                })
+              } catch { /* skip */ }
+            }))
+          } catch { /* skip */ }
+        }))
+
+        if (live) setItems(results)
+      } catch {
+        if (live) setItems([])
+      }
+    }
+    load()
+    return () => { live = false }
+  }, [studentId])
+
+  if (items === null) return null   // silent loading — don't distract from main page
+  if (items.length === 0) return null
+
+  return (
+    <div className="panel" style={{ marginBottom: '1.5rem', border: '1.5px solid #4f46e5', background: '#eef2ff' }}>
+      <div className="panel-heading">
+        <div>
+          <h3 style={{ color: '#3730a3', marginBottom: 2 }}>📝 Tests Ready to Take</h3>
+          <p style={{ fontSize: 12.5, color: '#4f46e5', margin: 0 }}>
+            You have {items.length} active assessment{items.length !== 1 ? 's' : ''} waiting.
+          </p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+        {items.map((item, i) => {
+          const isInProgress = item.existingStatus === 'IN_PROGRESS'
+          const isSubmitted  = item.existingStatus === 'SUBMITTED'
+
+          return (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+              background: 'white', border: '1px solid #c7d2fe', borderRadius: 10,
+              padding: '12px 16px',
+            }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e1b4b' }}>{item.roundName}</div>
+                <div style={{ fontSize: 12, color: '#4f46e5', marginTop: 2 }}>
+                  {item.companyName} · {item.driveName}
+                </div>
+                <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>
+                  {item.durationMinutes} min · {item.totalQuestions} questions
+                </div>
+              </div>
+
+              {isSubmitted && item.resultId ? (
+                <Link
+                  to={`/student/test/${item.assessmentId}/result/${item.existingAttemptId}`}
+                  className="secondary-button btn-sm"
+                  style={{ fontSize: 12 }}
+                >
+                  📊 View Result
+                </Link>
+              ) : isInProgress ? (
+                <button
+                  className="primary-button btn-sm"
+                  style={{ background: '#d97706', fontSize: 13 }}
+                  onClick={() => navigate(`/student/test/${item.assessmentId}`)}
+                >
+                  ▶ Resume Test
+                </button>
+              ) : (
+                <button
+                  className="primary-button btn-sm"
+                  style={{ background: '#059669', fontSize: 13, fontWeight: 700 }}
+                  onClick={() => navigate(`/student/test/${item.assessmentId}`)}
+                >
+                  📝 Start Test →
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function StudentDashboard() {
   const { profile } = useAuth()
   const [student, setStudent] = useState(null)
@@ -53,7 +174,12 @@ export default function StudentDashboard() {
     }
   }
 
-  if (loading) return <div className="page-state">Loading available drives…</div>
+  if (loading) return (
+    <div className="page-state">
+      <div className="loading-spinner" />
+      <span>Loading available drives…</span>
+    </div>
+  )
 
   return (
     <section>
@@ -73,6 +199,9 @@ export default function StudentDashboard() {
           Your student profile has not been configured. Contact the placement office to set up your student record before applying.
         </div>
       )}
+
+      {/* Test queue — only rendered when student record exists */}
+      {student && <TestQueue studentId={student.id} />}
 
       {drives.length === 0 ? (
         <p className="empty-copy">No open placement drives are available right now.</p>
