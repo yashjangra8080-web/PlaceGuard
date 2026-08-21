@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { startTestAttempt, submitMcqAttempt } from '../../services/assessments'
 
@@ -75,7 +75,7 @@ function QuestionNav({ total, current, answers, marked, onJump }) {
           Marked
         </div>
         <div className="test-legend-item">
-          <div className="legend-dot" style={{ background: '#e2e8f0' }} />
+          <div className="legend-dot" style={{ background: 'var(--card-border)' }} />
           Not visited
         </div>
       </div>
@@ -200,11 +200,6 @@ export default function TestPage() {
     })
   }, [current])
 
-  const handleExpire = useCallback(() => {
-    setExpired(true)
-    doSubmit()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   const doSubmit = useCallback(async () => {
     if (!testData) return
     setSubmitting(true)
@@ -230,6 +225,14 @@ export default function TestPage() {
     }
   }, [testData, answers, questionIdMap, assessmentId, navigate])
 
+  // handleExpire must be defined AFTER doSubmit so the dep array is not stale.
+  // If defined before doSubmit with [], the callback would always capture the
+  // initial doSubmit (which sees testData=null) and silently no-op on expiry.
+  const handleExpire = useCallback(() => {
+    setExpired(true)
+    doSubmit()
+  }, [doSubmit])
+
   // ── Render states ─────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -248,7 +251,7 @@ export default function TestPage() {
     return (
       <div className="test-layout" style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
         {isRoundLocked ? (
-          <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 12, padding: '28px 36px', maxWidth: 500, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
+          <div style={{ background: 'var(--card-bg-2)', border: '1px solid var(--card-border-2)', borderRadius: 12, padding: '28px 36px', maxWidth: 500, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
             <h2 style={{ color: '#1e3a5f', marginBottom: 8 }}>This Round Isn&apos;t Available Yet</h2>
             <p style={{ color: '#1e40af', marginBottom: 8, lineHeight: 1.6 }}>
@@ -261,7 +264,7 @@ export default function TestPage() {
             <button className="secondary-button" onClick={() => navigate(-1)}>← Back to My Applications</button>
           </div>
         ) : (
-          <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 12, padding: '28px 36px', maxWidth: 480, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
+          <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 12, padding: '28px 36px', maxWidth: 480, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
             <h2 style={{ color: '#991b1b', marginBottom: 8 }}>Cannot Start Test</h2>
             <p style={{ color: '#7f1d1d', marginBottom: 20 }}>{error}</p>
@@ -379,12 +382,12 @@ export default function TestPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
         }}>
           <div style={{
-            background: '#fff', borderRadius: 14, padding: '32px 36px',
+            background: 'var(--card-bg)', border: '1px solid var(--card-border-2)', borderRadius: 14, padding: '32px 36px',
             maxWidth: 440, width: '90%', fontFamily: 'Inter,sans-serif',
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           }}>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Submit Test?</h2>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '14px 18px', marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
                 <span>Answered</span>
                 <strong style={{ color: '#059669' }}>{answeredCount} / {total}</strong>

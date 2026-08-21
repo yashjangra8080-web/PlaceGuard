@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import LogoWordmark from '../components/brand/Logo'
@@ -220,7 +220,7 @@ export default function LoginPage() {
                 ) : 'Sign in securely →'}
               </button>
 
-              <p style={{ fontSize: 11.5, color: '#334155', textAlign: 'center', marginTop: 20 }}>
+              <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', textAlign: 'center', marginTop: 20 }}>
                 Access is provisioned by your placement office or administrator.
               </p>
             </form>

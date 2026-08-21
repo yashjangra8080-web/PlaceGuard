@@ -1,11 +1,11 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { evaluateRound } from '../../services/rounds'
 
 const STATUS_OPTIONS = [
-  { value: 'PASSED',       label: 'Passed',        color: '#146647' },
-  { value: 'FAILED',       label: 'Failed',         color: '#a3322c' },
-  { value: 'ABSENT',       label: 'Absent',         color: '#7a5c00' },
-  { value: 'NOT_ATTEMPTED',label: 'Not Attempted',  color: '#637089' },
+  { value: 'PASSED',        label: 'Passed',        color: 'var(--success)',  bg: 'var(--success-bg)',  border: 'var(--success-border)' },
+  { value: 'FAILED',        label: 'Failed',         color: 'var(--danger)',   bg: 'var(--danger-bg)',   border: 'var(--danger-border)' },
+  { value: 'ABSENT',        label: 'Absent',         color: 'var(--warning)',  bg: 'var(--warning-bg)',  border: 'var(--warning-border)' },
+  { value: 'NOT_ATTEMPTED', label: 'Not Attempted',  color: 'var(--text-secondary)', bg: 'rgba(255,255,255,0.04)', border: 'var(--card-border)' },
 ]
 
 export default function EvaluateRoundModal({ applicationRound, round, studentName, onClose, onSaved }) {
@@ -48,25 +48,27 @@ export default function EvaluateRoundModal({ applicationRound, round, studentNam
           <div>
             <span className="eyebrow">EVALUATE</span>
             <h3 style={{ marginBottom: '.15rem' }}>Round {round.round_number}: {round.name}</h3>
-            <p style={{ color: '#637089', fontSize: '.85rem', margin: 0 }}>{studentName}</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '.85rem', margin: 0 }}>{studentName}</p>
           </div>
-          <button className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
+          <button className="icon-btn" onClick={onClose} aria-label="Close">&#x2715;</button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '1.25rem' }}>
+          {/* Status selector */}
           <div className="form-group" style={{ marginBottom: '.9rem' }}>
-            <label>Result *</label>
+            <label className="form-label">Result *</label>
             <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '.4rem' }}>
               {STATUS_OPTIONS.map((opt) => (
                 <label
                   key={opt.value}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '.4rem',
-                    padding: '.35rem .75rem', borderRadius: '6px', cursor: 'pointer',
-                    border: `1.5px solid ${status === opt.value ? opt.color : '#dde2ea'}`,
-                    background: status === opt.value ? opt.color + '15' : 'transparent',
+                    padding: '.35rem .75rem', borderRadius: '8px', cursor: 'pointer',
+                    border: `1.5px solid ${status === opt.value ? opt.border : 'var(--card-border)'}`,
+                    background: status === opt.value ? opt.bg : 'transparent',
                     fontWeight: status === opt.value ? 600 : 400,
-                    fontSize: '.875rem', color: status === opt.value ? opt.color : '#374151',
+                    fontSize: '.875rem',
+                    color: status === opt.value ? opt.color : 'var(--text-secondary)',
                     transition: 'all .15s',
                   }}
                 >
@@ -85,8 +87,9 @@ export default function EvaluateRoundModal({ applicationRound, round, studentNam
           {hasScore && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '.9rem' }}>
               <div className="form-group">
-                <label>Score <small>(0 – {round.max_score})</small></label>
+                <label className="form-label">Score <small>(0 - {round.max_score})</small></label>
                 <input
+                  className="form-input"
                   type="number" step="0.01" min="0" max={round.max_score}
                   value={score}
                   placeholder={`Out of ${round.max_score}`}
@@ -94,26 +97,31 @@ export default function EvaluateRoundModal({ applicationRound, round, studentNam
                 />
               </div>
               <div className="form-group">
-                <label>Passing threshold</label>
-                <input value={round.passing_score != null ? round.passing_score : 'None'} disabled style={{ background: '#f5f7fa' }} />
+                <label className="form-label">Passing threshold</label>
+                <input
+                  className="form-input"
+                  value={round.passing_score != null ? round.passing_score : 'None'}
+                  disabled
+                />
               </div>
             </div>
           )}
 
           <div className="form-group" style={{ marginBottom: '.9rem' }}>
-            <label>Feedback <small>(optional)</small></label>
+            <label className="form-label">Feedback <small>(optional)</small></label>
             <textarea
+              className="form-textarea"
               rows={3}
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Notes on performance, specific strengths or areas to improve…"
+              placeholder="Notes on performance, specific strengths or areas to improve..."
             />
           </div>
 
           {round.is_elimination && (
-            <p style={{ fontSize: '.8rem', color: '#7a5c00', background: '#fffbeb', padding: '.5rem .75rem', borderRadius: '6px', marginBottom: '.75rem' }}>
-              ⚠ This is an <strong>elimination round</strong>. FAILED or ABSENT will reject the candidate.
-            </p>
+            <div className="modal-box elimination-warning">
+              This is an <strong>elimination round</strong>. FAILED or ABSENT will reject the candidate.
+            </div>
           )}
 
           {err && <div className="alert error" style={{ marginBottom: '.75rem' }}>{err}</div>}
@@ -121,7 +129,7 @@ export default function EvaluateRoundModal({ applicationRound, round, studentNam
           <div style={{ display: 'flex', gap: '.75rem', justifyContent: 'flex-end' }}>
             <button type="button" className="secondary-button" onClick={onClose}>Cancel</button>
             <button className="primary-button" type="submit" disabled={busy || !status}>
-              {busy ? 'Saving…' : 'Save evaluation'}
+              {busy ? 'Saving...' : 'Save evaluation'}
             </button>
           </div>
         </form>

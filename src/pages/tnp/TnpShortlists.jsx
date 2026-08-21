@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
@@ -8,10 +8,10 @@ function fmt(dateStr) {
 }
 
 const STATUS_CFG = {
-  PENDING:  { label: 'Pending Review', color: '#d97706', bg: 'rgba(217,119,6,0.1)' },
-  APPROVED: { label: 'Approved',       color: '#16a34a', bg: 'rgba(22,163,74,0.1)' },
-  REJECTED: { label: 'Rejected',       color: '#dc2626', bg: 'rgba(220,38,38,0.1)' },
-  APPLIED:  { label: 'Applied',        color: '#4f46e5', bg: 'rgba(79,70,229,0.1)' },
+  PENDING:  { label: 'Pending Review', color: 'var(--warning)', bg: 'rgba(245,158,11,0.1)' },
+  APPROVED: { label: 'Approved',       color: 'var(--success)', bg: 'rgba(16,185,129,0.1)' },
+  REJECTED: { label: 'Rejected',       color: 'var(--danger)', bg: 'rgba(244,63,94,0.1)' },
+  APPLIED:  { label: 'Applied',        color: 'var(--accent)', bg: 'rgba(99,102,241,0.1)' },
 }
 
 export default function TnpShortlists() {
@@ -71,10 +71,10 @@ export default function TnpShortlists() {
       {proposals && (
         <div className="kpi-grid" style={{ marginBottom: '1.5rem' }}>
           {[
-            { label: 'Pending', value: counts.PENDING ?? 0, color: '#d97706' },
-            { label: 'Approved', value: counts.APPROVED ?? 0, color: '#16a34a' },
-            { label: 'Rejected', value: counts.REJECTED ?? 0, color: '#dc2626' },
-            { label: 'Applied', value: counts.APPLIED ?? 0, color: '#4f46e5' },
+            { label: 'Pending', value: counts.PENDING ?? 0, color: 'var(--warning)' },
+            { label: 'Approved', value: counts.APPROVED ?? 0, color: 'var(--success)' },
+            { label: 'Rejected', value: counts.REJECTED ?? 0, color: 'var(--danger)' },
+            { label: 'Applied', value: counts.APPLIED ?? 0, color: 'var(--accent)' },
           ].map(k => (
             <article key={k.label} className="kpi" style={{ padding: '1rem 1.25rem' }}>
               <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'var(--text-secondary)', marginBottom: 8 }}>
@@ -113,7 +113,7 @@ export default function TnpShortlists() {
         <div className="page-state"><div className="loading-spinner" /><span>Loading proposals…</span></div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📋</div>
+          
           <div className="empty-state-title">No proposals found</div>
           <div className="empty-state-sub">Coordinator shortlist proposals will appear here.</div>
         </div>
@@ -134,7 +134,7 @@ export default function TnpShortlists() {
             </thead>
             <tbody>
               {filtered.map(p => {
-                const cfg = STATUS_CFG[p.status] ?? { label: p.status, color: '#64748b', bg: 'transparent' }
+                const cfg = STATUS_CFG[p.status] ?? { label: p.status, color: 'var(--text-secondary)', bg: 'transparent' }
                 const studentName = p.students?.profiles?.name ?? '—'
                 const studentEmail = p.students?.profiles?.email ?? ''
                 const drive = p.drives
@@ -155,8 +155,8 @@ export default function TnpShortlists() {
                     <td>
                       <span style={{
                         fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6,
-                        color: p.action === 'ADD' ? '#16a34a' : '#dc2626',
-                        background: p.action === 'ADD' ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)',
+                        color: p.action === 'ADD' ? 'var(--success)' : 'var(--danger)',
+                        background: p.action === 'ADD' ? 'rgba(16,185,129,0.1)' : 'rgba(244,63,94,0.1)',
                         padding: '2px 7px', borderRadius: 4,
                       }}>{p.action}</span>
                     </td>

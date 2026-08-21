@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { verifyAuditIntegrity } from '../../services/placement'
 
@@ -10,17 +10,17 @@ function fmt(dateStr) {
 }
 
 const ACTION_COLORS = {
-  APPLICATION_SUBMITTED: '#4f46e5',
-  TEST_STARTED: '#0284c7',
-  TEST_SUBMITTED: '#16a34a',
-  ROUND_EVALUATED: '#d97706',
-  SHORTLIST_PROPOSED: '#7c3aed',
-  SHORTLIST_REVIEWED: '#059669',
-  ADMIN_CHANGE_REQUESTED: '#dc2626',
-  ADMIN_CHANGE_APPROVED: '#16a34a',
-  ADMIN_CHANGE_REJECTED: '#dc2626',
-  ANOMALY_DETECTED: '#dc2626',
-  DRIVE_PUBLISHED: '#4f46e5',
+  APPLICATION_SUBMITTED: 'var(--accent)',
+  TEST_STARTED: 'var(--info)',
+  TEST_SUBMITTED: 'var(--success)',
+  ROUND_EVALUATED: 'var(--warning)',
+  SHORTLIST_PROPOSED: 'var(--purple)',
+  SHORTLIST_REVIEWED: 'var(--success)',
+  ADMIN_CHANGE_REQUESTED: 'var(--danger)',
+  ADMIN_CHANGE_APPROVED: 'var(--success)',
+  ADMIN_CHANGE_REJECTED: 'var(--danger)',
+  ANOMALY_DETECTED: 'var(--danger)',
+  DRIVE_PUBLISHED: 'var(--accent)',
 }
 
 export default function TnpAudit() {
@@ -76,13 +76,13 @@ export default function TnpAudit() {
         {/* Integrity badge */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          background: integrityOk ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)',
+          background: integrityOk ? 'var(--success-bg)' : 'var(--danger-bg)',
           border: `1px solid ${integrityOk ? 'rgba(22,163,74,0.25)' : 'rgba(220,38,38,0.25)'}`,
           borderRadius: 10, padding: '10px 16px',
         }}>
           <div style={{ fontSize: 18 }}>{integrityOk ? '✓' : '⚠'}</div>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: integrityOk ? '#16a34a' : '#dc2626' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: integrityOk ? 'var(--success)' : 'var(--danger)' }}>
               Audit Integrity · {integrityOk ? 'Verified' : 'Issue Detected'}
             </div>
             <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>
@@ -99,10 +99,7 @@ export default function TnpAudit() {
         <select
           value={filterAction}
           onChange={e => { setFilterAction(e.target.value); setPage(0) }}
-          style={{
-            background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: 8,
-            color: 'var(--text-primary)', padding: '7px 12px', fontSize: 13, minWidth: 200,
-          }}
+          className="form-select" style={{ minWidth: 200 }}
         >
           <option value="">All Action Types</option>
           {Object.keys(ACTION_COLORS).map(a => (
@@ -124,7 +121,7 @@ export default function TnpAudit() {
         <div className="page-state"><div className="loading-spinner" /><span>Loading audit log…</span></div>
       ) : commits.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📋</div>
+          
           <div className="empty-state-title">No audit events found</div>
           <div className="empty-state-sub">Audit events are recorded as placement actions occur.</div>
         </div>
@@ -146,7 +143,7 @@ export default function TnpAudit() {
               </thead>
               <tbody>
                 {commits.map(c => {
-                  const color = ACTION_COLORS[c.action_type] ?? '#64748b'
+                  const color = ACTION_COLORS[c.action_type] ?? 'var(--text-secondary)'
                   const actorName = c.profiles?.name ?? c.actor_id?.slice(0, 8) ?? '—'
                   const actorRole = c.profiles?.role ?? '—'
                   return (

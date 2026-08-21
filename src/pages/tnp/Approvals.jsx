@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getPendingProposals } from '../../services/drives'
@@ -59,7 +59,7 @@ export default function Approvals() {
     }
   }
 
-  if (loading) return <div className="page-state">Loading pending proposals…</div>
+  if (loading) return <div className="page-state"><div className="loading-spinner" /><span>Loading pending proposals…</span></div>
 
   return (
     <section>
@@ -109,7 +109,7 @@ export default function Approvals() {
                   <span><strong>Proposed:</strong> {new Date(proposal.created_at).toLocaleString()}</span>
                 </div>
 
-                <div style={{ fontSize: '.85rem', background: '#f7f9fa', padding: '.65rem', borderRadius: '7px', color: '#334258', marginBottom: '.75rem' }}>
+                <div style={{ fontSize: '.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', padding: '.65rem', borderRadius: '7px', color: 'var(--text-secondary)', marginBottom: '.75rem' }}>
                   <strong>Coordinator reason:</strong> {proposal.reason}
                 </div>
 
@@ -118,17 +118,17 @@ export default function Approvals() {
                     You submitted this proposal. Separation-of-duties prevents self-approval.
                   </div>
                 ) : rs?.done ? (
-                  <div className="alert" style={{ background: '#ddf5e9', color: '#146647', fontSize: '.85rem' }}>
+                  <div className="alert success" style={{ fontSize: '.85rem' }}>
                     ✓ {rs.decision === 'APPROVED' ? 'Approved' : 'Rejected'} — audit commit recorded.
                   </div>
                 ) : rs ? (
                   <div className="review-form">
-                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: rs.decision === 'APPROVED' ? '#146647' : '#a3322c' }}>
+                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: rs.decision === 'APPROVED' ? 'var(--success)' : 'var(--danger)' }}>
                       {rs.decision === 'APPROVED' ? 'Approving' : 'Rejecting'} — document your reason:
                     </div>
                     <textarea
                       rows={2}
-                      style={{ padding: '.5rem', border: '1px solid #cbd4dc', borderRadius: '6px', font: 'inherit', fontSize: '.85rem', resize: 'vertical' }}
+                      className="form-textarea" style={{ fontSize: '.85rem' }}
                       value={rs.reason}
                       placeholder="Required governance reason (min 5 chars)"
                       onChange={(e) => setReviewState((p) => ({ ...p, [proposal.id]: { ...rs, reason: e.target.value } }))}
@@ -137,7 +137,7 @@ export default function Approvals() {
                     <div className="review-actions">
                       <button
                         className="primary-button"
-                        style={{ background: rs.decision === 'APPROVED' ? '#174d47' : '#9c2f2a' }}
+                        style={{ background: rs.decision === 'APPROVED' ? 'var(--success)' : 'var(--danger)' }}
                         disabled={rs.busy || !rs.reason.trim()}
                         onClick={() => submitReview(proposal.id)}
                       >
@@ -153,7 +153,7 @@ export default function Approvals() {
                     </button>
                     <button
                       className="secondary-button"
-                      style={{ color: '#a3322c', borderColor: '#f5c2c0' }}
+                      style={{ color: 'var(--danger)', borderColor: 'var(--danger-border)' }}
                       onClick={() => startReview(proposal.id, 'REJECTED')}
                     >
                       Reject

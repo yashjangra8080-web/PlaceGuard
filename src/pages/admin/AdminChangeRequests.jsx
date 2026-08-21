@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { requestAdminChange, getMyChangeRequests } from '../../services/assessments'
 
@@ -8,10 +8,10 @@ const ACTIONS = [
   'EXTEND_DEADLINE', 'MODIFY_SHORTLIST', 'REOPEN_DRIVE', 'OTHER',
 ]
 const STATUS_COLORS = {
-  PENDING_TNP_APPROVAL: { bg: '#fef3c7', color: '#92400e', label: 'Awaiting T&P Approval' },
-  APPROVED: { bg: '#d1fae5', color: '#065f46', label: 'Approved' },
-  REJECTED: { bg: '#fee2e2', color: '#991b1b', label: 'Rejected' },
-  WITHDRAWN: { bg: '#f1f5f9', color: '#64748b', label: 'Withdrawn' },
+  PENDING_TNP_APPROVAL: { bg: 'rgba(245,158,11,0.1)', color: 'var(--warning)', label: 'Awaiting T&P Approval' },
+  APPROVED: { bg: 'var(--success-bg)', color: 'var(--success)', label: 'Approved' },
+  REJECTED: { bg: 'var(--danger-bg)', color: 'var(--danger)', label: 'Rejected' },
+  WITHDRAWN: { bg: 'rgba(71,85,105,0.08)', color: 'var(--text-secondary)', label: 'Withdrawn' },
 }
 
 function formatDate(d) {
@@ -205,14 +205,14 @@ export default function AdminChangeRequests() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
                     <div>
                       <span style={{ fontSize: 13.5, fontWeight: 700 }}>{req.action}</span>
-                      <span style={{ fontSize: 11, color: '#64748b', marginLeft: 8 }}>on {req.entity_type}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginLeft: 8 }}>on {req.entity_type}</span>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: statusStyle.color, background: 'white', padding: '2px 8px', borderRadius: 5 }}>
                       {statusStyle.label}
                     </span>
                   </div>
-                  <p style={{ fontSize: 12.5, color: '#334155', margin: 0, marginBottom: 4 }}>{req.reason}</p>
-                  <div style={{ fontSize: 11, color: '#64748b' }}>Submitted: {formatDate(req.created_at)}</div>
+                  <p style={{ fontSize: 12.5, color: 'var(--text-primary)', margin: 0, marginBottom: 4 }}>{req.reason}</p>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Submitted: {formatDate(req.created_at)}</div>
                   {approval && (
                     <div style={{ marginTop: 8, fontSize: 12, background: 'rgba(255,255,255,0.6)', borderRadius: 6, padding: '6px 10px' }}>
                       <strong>T&P Decision:</strong> {approval.decision} — {approval.reason || '—'} ({formatDate(approval.created_at)})

@@ -1,4 +1,4 @@
-// Round progress display shared between student and company views.
+﻿// Round progress display shared between student and company views.
 // studentView=true hides evaluator name and redacts locked feedback.
 
 const STATUS_CONFIG = {
@@ -7,7 +7,7 @@ const STATUS_CONFIG = {
   PASSED:       { label: 'Passed',        icon: '✅', color: '#146647' },
   FAILED:       { label: 'Failed',        icon: '❌', color: '#a3322c' },
   ABSENT:       { label: 'Absent',        icon: '⚠️', color: '#7a5c00' },
-  NOT_ATTEMPTED:{ label: 'Not Attempted', icon: '—',  color: '#637089' },
+  NOT_ATTEMPTED:{ label: 'Not Attempted', icon: '—',  color: 'var(--text-secondary)' },
 }
 
 const TYPE_LABELS = {

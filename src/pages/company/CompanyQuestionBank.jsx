@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getCompanyRecord } from '../../services/drives'
 import { getCompanyQuestions, getAiGeneratedQuestions } from '../../services/assessments'
 
 const DIFFICULTY_CFG = {
-  EASY:   { color: '#16a34a', bg: 'rgba(22,163,74,0.12)'   },
-  MEDIUM: { color: '#d97706', bg: 'rgba(217,119,6,0.12)'   },
-  HARD:   { color: '#dc2626', bg: 'rgba(220,38,38,0.12)'   },
+  EASY:   { color: 'var(--success)', bg: 'var(--success-bg)' },
+  MEDIUM: { color: 'var(--warning)', bg: 'var(--warning-bg)' },
+  HARD:   { color: 'var(--danger)',  bg: 'var(--danger-bg)'  },
 }
 
 const TYPE_LABELS = {
@@ -83,7 +83,7 @@ export default function CompanyQuestionBank() {
         {aiPending.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 10, padding: '8px 14px' }}>
             <span style={{ fontSize: 14 }}>✨</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: '#a78bfa' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--purple)' }}>
               {aiPending.length} AI draft{aiPending.length !== 1 ? 's' : ''} need review
             </span>
           </div>
@@ -160,7 +160,7 @@ export default function CompanyQuestionBank() {
             const text   = isAi ? q.draft_payload?.question   : q.question_text
             const type   = isAi ? (q.draft_payload?.type ?? 'MCQ') : q.question_type
             const status = isAi ? q.review_status : 'APPROVED'
-            const dfCfg  = DIFFICULTY_CFG[diff] ?? { color: '#64748b', bg: 'transparent' }
+            const dfCfg  = DIFFICULTY_CFG[diff] ?? { color: 'var(--text-secondary)', bg: 'transparent' }
 
             return (
               <div key={q.id ?? idx} className="card" style={{ padding: '1rem 1.25rem' }}>
@@ -177,13 +177,13 @@ export default function CompanyQuestionBank() {
                       </span>
                       {/* Topic */}
                       {topic && (
-                        <span style={{ fontSize: 10, fontWeight: 600, color: '#818cf8', background: 'rgba(129,140,248,0.1)', padding: '2px 7px', borderRadius: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent-mid)', background: 'rgba(129,140,248,0.1)', padding: '2px 7px', borderRadius: 4 }}>
                           {topic}
                         </span>
                       )}
                       {/* AI badge */}
                       {(isAi || q.ai_generated) && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '2px 7px', borderRadius: 4 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--purple)', background: 'rgba(167,139,250,0.1)', padding: '2px 7px', borderRadius: 4 }}>
                           ✨ AI Draft
                         </span>
                       )}
@@ -196,17 +196,17 @@ export default function CompanyQuestionBank() {
                   {/* Status */}
                   <div style={{ flexShrink: 0 }}>
                     {status === 'PENDING' && (
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#d97706', background: 'rgba(217,119,6,0.1)', padding: '3px 9px', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--warning)', background: 'var(--warning-bg)', padding: '3px 9px', borderRadius: 4 }}>
                         Needs Review
                       </span>
                     )}
                     {status === 'APPROVED' && (
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#16a34a', background: 'rgba(22,163,74,0.1)', padding: '3px 9px', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--success)', background: 'var(--success-bg)', padding: '3px 9px', borderRadius: 4 }}>
                         ✓ Approved
                       </span>
                     )}
                     {status === 'REJECTED' && (
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626', background: 'rgba(220,38,38,0.1)', padding: '3px 9px', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-bg)', padding: '3px 9px', borderRadius: 4 }}>
                         Rejected
                       </span>
                     )}
@@ -222,7 +222,7 @@ export default function CompanyQuestionBank() {
                         style={{
                           fontSize: 12, padding: '3px 10px', borderRadius: 6,
                           background: opt.is_correct ? 'rgba(22,163,74,0.12)' : 'var(--card-bg-2)',
-                          color: opt.is_correct ? '#16a34a' : 'var(--text-secondary)',
+                          color: opt.is_correct ? 'var(--success)' : 'var(--text-secondary)',
                           border: opt.is_correct ? '1px solid rgba(22,163,74,0.25)' : '1px solid var(--border)',
                           fontWeight: opt.is_correct ? 700 : 400,
                         }}

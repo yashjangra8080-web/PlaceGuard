@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { getPendingProposals } from '../../services/drives'
 
@@ -70,10 +70,10 @@ export default function CoordinatorAnalytics() {
           {/* KPI grid */}
           <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
             {[
-              { label: 'Active Drives',      value: stats.totalDrives,   color: '#4f46e5' },
-              { label: 'Total Applications', value: stats.totalApps,     color: '#0284c7' },
-              { label: 'Selected',           value: stats.totalSelected, color: '#16a34a' },
-              { label: 'Rejected',           value: stats.totalRejected, color: '#dc2626' },
+              { label: 'Active Drives',      value: stats.totalDrives,   color: 'var(--accent)' },
+              { label: 'Total Applications', value: stats.totalApps,     color: 'var(--info)' },
+              { label: 'Selected',           value: stats.totalSelected, color: 'var(--success)' },
+              { label: 'Rejected',           value: stats.totalRejected, color: 'var(--danger)' },
             ].map(k => (
               <article key={k.label} className="kpi" style={{ padding: '1rem 1.25rem' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'var(--text-secondary)', marginBottom: 8 }}>
@@ -91,9 +91,9 @@ export default function CoordinatorAnalytics() {
                 Round Progression
               </div>
               {[
-                { label: 'Pending / Upcoming', value: stats.pendingRounds, color: '#0284c7' },
-                { label: 'Passed',             value: stats.passedRounds,  color: '#16a34a' },
-                { label: 'Failed',             value: stats.failedRounds,  color: '#dc2626' },
+                { label: 'Pending / Upcoming', value: stats.pendingRounds, color: 'var(--info)' },
+                { label: 'Passed',             value: stats.passedRounds,  color: 'var(--success)' },
+                { label: 'Failed',             value: stats.failedRounds,  color: 'var(--danger)' },
               ].map(r => {
                 const total = (stats.pendingRounds ?? 0) + (stats.passedRounds ?? 0) + (stats.failedRounds ?? 0)
                 const pct   = total > 0 ? Math.round((Number(r.value) / total) * 100) : 0
@@ -132,7 +132,7 @@ export default function CoordinatorAnalytics() {
                           {p.drives?.title ?? '—'} · {p.action}
                         </div>
                       </div>
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#d97706', background: 'rgba(217,119,6,0.1)', padding: '2px 7px', borderRadius: 4 }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--warning)', background: 'var(--warning-bg)', padding: '2px 7px', borderRadius: 4 }}>
                         Pending
                       </span>
                     </div>

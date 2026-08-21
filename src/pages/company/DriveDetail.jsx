@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -18,7 +18,7 @@ const APP_STATUS_COLORS = {
   SELECTED:    '#146647',
   REJECTED:    '#a3322c',
   SHORTLISTED: '#6d28d9',
-  APPLIED:     '#637089',
+  APPLIED:     'var(--text-secondary)',
 }
 
 export default function DriveDetail() {
@@ -134,7 +134,7 @@ export default function DriveDetail() {
     }
   }
 
-  if (loading) return <div className="page-state">Loading drive details…</div>
+  if (loading) return <div className="page-state"><div className="loading-spinner" /><span>Loading drive details…</span></div>
   if (error) return (
     <div className="page-state">
       <div className="alert error">{error}</div>
@@ -210,7 +210,7 @@ export default function DriveDetail() {
           {integrity && (
             <article className="metric">
               <span>Audit integrity</span>
-              <strong style={{ color: integrity.valid ? '#146647' : '#a3322c' }}>
+              <strong style={{ color: integrity.valid ? 'var(--success)' : 'var(--danger)' }}>
                 {integrity.valid ? 'Verified' : 'FAILURE'}
               </strong>
               <small>
@@ -254,7 +254,7 @@ export default function DriveDetail() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: '.95rem' }}>{app.student_name}</div>
-                        <div style={{ fontSize: '.82rem', color: '#637089' }}>
+                        <div style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>
                           {app.roll_number} · {app.branch} · CGPA {app.cgpa}
                         </div>
                       </div>
@@ -268,7 +268,7 @@ export default function DriveDetail() {
                         {app.application_status}
                       </span>
                       {activeRound && (
-                        <span style={{ fontSize: '.8rem', color: '#0369a1' }}>
+                        <span style={{ fontSize: '.8rem', color: 'var(--info)' }}>
                           Round {activeRound.round_number}: {activeRound.name}
                         </span>
                       )}
@@ -283,7 +283,7 @@ export default function DriveDetail() {
 
                     {/* Expanded rounds */}
                     {isOpen && (
-                      <div style={{ marginTop: '1rem', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
                         <RoundProgressList
                           rounds={appRounds.map((r) => ({ ...r, round_number: r.round_number }))}
                           studentView={false}
@@ -344,7 +344,7 @@ export default function DriveDetail() {
               <ol className="round-list" style={{ marginTop: '.75rem' }} aria-label="Configured rounds">
                 {rounds.map((r) => (
                   <li key={r.id} className="round-item round-pending" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '.75rem 0', borderBottom: '1px solid var(--border)' }}>
-                    <div className="round-number-badge" style={{ background: '#0369a118', color: '#0369a1', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                    <div className="round-number-badge" style={{ background: '#0369a118', color: 'var(--info)', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
                       {r.round_number}
                     </div>
                     <div style={{ flex: 1 }}>
@@ -353,9 +353,9 @@ export default function DriveDetail() {
                         <span className="round-type-pill" style={{ marginLeft: '.4rem' }}>{r.round_type?.replace(/_/g, ' ')}</span>
                         {r.is_elimination && <span className="round-elim-badge" style={{ marginLeft: '.3rem' }}>Elim</span>}
                       </div>
-                      {r.description && <p className="round-desc" style={{ fontSize: '.82rem', color: '#637089', margin: '.2rem 0 0' }}>{r.description}</p>}
+                      {r.description && <p className="round-desc" style={{ fontSize: '.82rem', color: 'var(--text-secondary)', margin: '.2rem 0 0' }}>{r.description}</p>}
                       {(r.max_score != null || r.passing_score != null) && (
-                        <span style={{ fontSize: '.8rem', color: '#637089' }}>
+                        <span style={{ fontSize: '.8rem', color: 'var(--text-secondary)' }}>
                           {r.max_score != null && `Max: ${r.max_score}`}
                           {r.max_score != null && r.passing_score != null && ' · '}
                           {r.passing_score != null && `Pass: ${r.passing_score}`}

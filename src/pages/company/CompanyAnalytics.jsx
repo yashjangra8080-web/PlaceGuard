@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getCompanyRecord, getCompanyDrives } from '../../services/drives'
 import { getDriveAssessmentAnalytics } from '../../services/assessments'
@@ -117,10 +117,10 @@ export default function CompanyAnalytics() {
           {/* Summary KPIs */}
           <div className="kpi-grid" style={{ marginBottom: '2rem' }}>
             {[
-              { label: 'Total Attempts',   value: totalAttempts,          color: '#4f46e5' },
-              { label: 'Passed',           value: totalPassed,            color: '#16a34a' },
-              { label: 'Pass Rate',        value: `${overallPassRate}%`,  color: '#d97706' },
-              { label: 'Avg Score',        value: avgScore,               color: '#0284c7' },
+              { label: 'Total Attempts',   value: totalAttempts,          color: 'var(--accent)' },
+              { label: 'Passed',           value: totalPassed,            color: 'var(--success)' },
+              { label: 'Pass Rate',        value: `${overallPassRate}%`,  color: 'var(--warning)' },
+              { label: 'Avg Score',        value: avgScore,               color: 'var(--info)' },
             ].map(k => (
               <article key={k.label} className="kpi" style={{ padding: '1rem 1.25rem' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: 'var(--text-secondary)', marginBottom: 8 }}>{k.label}</div>
@@ -164,12 +164,12 @@ export default function CompanyAnalytics() {
                         </td>
                         <td style={{ textAlign: 'center' }}><span style={{ fontWeight: 700 }}>{a.total_attempts ?? 0}</span></td>
                         <td style={{ textAlign: 'center' }}>
-                          <span style={{ fontWeight: 700, color: '#16a34a' }}>{a.passed_count ?? 0}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--success)' }}>{a.passed_count ?? 0}</span>
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <span style={{
                             fontWeight: 700,
-                            color: passRate >= 60 ? '#16a34a' : passRate >= 40 ? '#d97706' : '#dc2626',
+                            color: passRate >= 60 ? 'var(--success)' : passRate >= 40 ? 'var(--warning)' : 'var(--danger)',
                           }}>{passRate}%</span>
                         </td>
                         <td style={{ textAlign: 'center' }}>

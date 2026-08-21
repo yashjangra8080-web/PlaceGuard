@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getDrivesWithEligibleCandidates } from '../../services/drives'
@@ -7,16 +7,16 @@ import { proposeShortlistChange } from '../../services/placement'
 
 // ── Round status display helpers ──────────────────────────────────────────────
 const ROUND_STATUS_META = {
-  PENDING:  { label: 'Available',   color: '#4f46e5', bg: '#ede9fe' },
-  ACTIVE:   { label: 'In Progress', color: '#d97706', bg: '#fef3c7' },
-  PASSED:   { label: 'Passed',      color: '#059669', bg: '#d1fae5' },
-  FAILED:   { label: 'Failed',      color: '#dc2626', bg: '#fee2e2' },
-  ABSENT:   { label: 'Absent',      color: '#6b7280', bg: '#f3f4f6' },
-  LOCKED:   { label: 'Locked',      color: '#94a3b8', bg: '#f1f5f9' },
+  PENDING:  { label: 'Available',   color: 'var(--accent)', bg: 'rgba(99,102,241,0.1)' },
+  ACTIVE:   { label: 'In Progress', color: 'var(--warning)', bg: 'rgba(245,158,11,0.1)' },
+  PASSED:   { label: 'Passed',      color: 'var(--success)', bg: 'rgba(16,185,129,0.1)' },
+  FAILED:   { label: 'Failed',      color: 'var(--danger)', bg: 'rgba(244,63,94,0.1)' },
+  ABSENT:   { label: 'Absent',      color: 'var(--text-tertiary)', bg: 'rgba(71,85,105,0.1)' },
+  LOCKED:   { label: 'Locked',      color: 'var(--text-tertiary)', bg: 'rgba(71,85,105,0.06)' },
 }
 
 function RoundChip({ status }) {
-  const s = ROUND_STATUS_META[status] ?? { label: status, color: '#64748b', bg: '#f1f5f9' }
+  const s = ROUND_STATUS_META[status] ?? { label: status, color: 'var(--text-secondary)', bg: 'rgba(71,85,105,0.08)' }
   return (
     <span style={{
       fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase',
@@ -83,7 +83,7 @@ function CandidateRow({ app, driveId, proposeState, onInitPropose, onCancelPropo
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {active && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: '#334258', fontWeight: 600 }}>{active.label}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{active.label}</span>
                 <RoundChip status={active.round.status} />
               </div>
             )}
@@ -116,12 +116,12 @@ function CandidateRow({ app, driveId, proposeState, onInitPropose, onCancelPropo
           <span className="inline-success" style={{ fontSize: 12 }}>Proposal submitted ✓</span>
         ) : ps ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem', minWidth: '240px' }}>
-            <div style={{ fontSize: '.8rem', fontWeight: 700, color: '#334258' }}>
+            <div style={{ fontSize: '.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Propose REMOVE — document reason:
             </div>
             <textarea
               rows={2}
-              style={{ padding: '.5rem', border: '1px solid #cbd4dc', borderRadius: '6px', font: 'inherit', fontSize: '.85rem', resize: 'vertical' }}
+              className="form-textarea" style={{ fontSize: '.85rem' }}
               value={ps.reason}
               placeholder="Required: governance reason (min 5 chars)"
               onChange={(e) => onReasonChange(app.application_id, e.target.value)}
@@ -240,7 +240,7 @@ export default function CoordinatorDashboard() {
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  if (loadingDrives) return <div className="page-state">Loading drives…</div>
+  if (loadingDrives) return <div className="page-state"><div className="loading-spinner" /><span>Loading drives…</span></div>
 
   return (
     <section>
@@ -278,7 +278,7 @@ export default function CoordinatorDashboard() {
                 <div>
                   <span className="eyebrow">{drive.companies?.company_name ?? 'COMPANY'}</span>
                   <h3>{drive.title} — {drive.role_name}</h3>
-                  <span style={{ fontSize: '.82rem', color: '#637089' }}>
+                  <span style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>
                     Deadline: {new Date(drive.deadline).toLocaleString()}
                   </span>
                 </div>
@@ -290,16 +290,14 @@ export default function CoordinatorDashboard() {
               {isExpanded && (
                 <div style={{ marginTop: '1rem' }}>
                   {isLoadingApps ? (
-                    <div style={{ padding: '1rem', color: '#64748b', fontSize: 13 }}>
-                      Loading candidate progress…
-                    </div>
+                    <div className="page-state" style={{ minHeight: 80 }}><div className="loading-spinner" /><span>Loading candidate progress…</span></div>
                   ) : driveErr ? (
                     /* ── Real error from RPC — show it, allow retry ── */
-                    <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8 }}>
-                      <div style={{ fontWeight: 700, color: '#991b1b', fontSize: 13, marginBottom: 6 }}>
+                    <div style={{ padding: '1rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: 8 }}>
+                      <div style={{ fontWeight: 700, color: 'var(--danger)', fontSize: 13, marginBottom: 6 }}>
                         ⚠ Could not load applicants
                       </div>
-                      <div style={{ fontSize: 12, color: '#7f1d1d', marginBottom: 10, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      <div style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 10, fontFamily: 'monospace', wordBreak: 'break-all' }}>
                         {driveErr}
                       </div>
                       <button
@@ -317,7 +315,7 @@ export default function CoordinatorDashboard() {
                       <div style={{
                         display: 'flex', gap: '0.75rem', padding: '0.35rem 0.5rem 0.35rem 0.75rem',
                         fontSize: 10.5, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase',
-                        letterSpacing: 0.6, borderBottom: '1px solid #e2e8f0', marginBottom: '0.25rem',
+                        letterSpacing: 0.6, borderBottom: '1px solid var(--card-border)', marginBottom: '0.25rem',
                       }}>
                         <div style={{ flex: '1 1 180px' }}>Candidate</div>
                         <div style={{ flex: '2 1 220px' }}>Round Progress</div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getAllProfiles, updateProfileStatus, getMyAccessRequests, createAccessRequest } from '../../services/admin'
 
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) return <div className="page-state">Loading administration data…</div>
+  if (loading) return <div className="page-state"><div className="loading-spinner" /><span>Loading administration data…</span></div>
 
   const ROLE_LABELS = { student: 'Student', company: 'Company', coordinator: 'Coordinator', tnp_head: 'T&P Head', admin: 'Admin' }
 
@@ -102,25 +102,25 @@ export default function AdminDashboard() {
         </div>
 
         {reqSuccess && (
-          <div className="alert" style={{ background: '#ddf5e9', color: '#146647', fontSize: '.85rem', marginBottom: '.75rem' }}>
+          <div className="alert success" style={{ fontSize: '.85rem', marginBottom: '.75rem' }}>
             Access request submitted and recorded in the audit trail.
           </div>
         )}
 
         {showReqForm && (
-          <form onSubmit={handleCreateRequest} style={{ marginBottom: '1rem', padding: '1rem', background: '#f7f9fa', borderRadius: '8px' }}>
+          <form onSubmit={handleCreateRequest} style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--card-bg)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem', marginBottom: '.75rem' }}>
               <div className="form-group">
                 <label>Resource type *</label>
-                <input required value={reqForm.resourceType} onChange={(e) => setReqForm((f) => ({ ...f, resourceType: e.target.value }))} placeholder="e.g. student_records, audit_log" />
+                <input required className="form-input" value={reqForm.resourceType} onChange={(e) => setReqForm((f) => ({ ...f, resourceType: e.target.value }))} placeholder="e.g. student_records, audit_log" />
               </div>
               <div className="form-group">
                 <label>Resource ID <small>(optional UUID)</small></label>
-                <input value={reqForm.resourceId} onChange={(e) => setReqForm((f) => ({ ...f, resourceId: e.target.value }))} placeholder="UUID of specific resource" />
+                <input className="form-input" value={reqForm.resourceId} onChange={(e) => setReqForm((f) => ({ ...f, resourceId: e.target.value }))} placeholder="UUID of specific resource" />
               </div>
               <div className="form-group" style={{ gridColumn: 'span 2' }}>
                 <label>Reason * <small>(min 10 characters)</small></label>
-                <textarea required minLength={10} rows={2} value={reqForm.reason} onChange={(e) => setReqForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Document why you need access to this resource" />
+                <textarea required className="form-textarea" minLength={10} rows={2} value={reqForm.reason} onChange={(e) => setReqForm((f) => ({ ...f, reason: e.target.value }))} placeholder="Document why you need access to this resource" />
               </div>
             </div>
             {reqError && <div className="alert error" style={{ marginBottom: '.5rem' }}>{reqError}</div>}
@@ -144,9 +144,9 @@ export default function AdminDashboard() {
               {requests.map((req) => (
                 <tr key={req.id}>
                   <td>{req.resource_type}</td>
-                  <td style={{ maxWidth: '300px', fontSize: '.82rem', color: '#334258' }}>{req.reason}</td>
+                  <td style={{ maxWidth: '300px', fontSize: '.82rem', color: 'var(--text-secondary)' }}>{req.reason}</td>
                   <td><span className={`badge badge-${req.status}`}>{req.status}</span></td>
-                  <td style={{ fontSize: '.82rem', color: '#637089' }}>{new Date(req.created_at).toLocaleString()}</td>
+                  <td style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>{new Date(req.created_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -180,26 +180,26 @@ export default function AdminDashboard() {
               {profiles.map((p) => (
                 <tr key={p.id}>
                   <td><strong>{p.name}</strong></td>
-                  <td style={{ fontSize: '.85rem', color: '#637089' }}>{p.email}</td>
+                  <td style={{ fontSize: '.85rem', color: 'var(--text-secondary)' }}>{p.email}</td>
                   <td><span className="badge badge-draft">{ROLE_LABELS[p.role] || p.role}</span></td>
                   <td>
                     <span className={`badge badge-${p.is_active ? 'APPROVED' : 'REJECTED'}`}>
                       {p.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td style={{ fontSize: '.82rem', color: '#637089' }}>{new Date(p.created_at).toLocaleDateString()}</td>
+                  <td style={{ fontSize: '.82rem', color: 'var(--text-secondary)' }}>{new Date(p.created_at).toLocaleDateString()}</td>
                   <td>
                     {p.id !== profile.id ? (
                       <button
                         className="quiet-button"
-                        style={{ color: p.is_active ? '#9c2f2a' : '#146647', margin: 0, fontSize: '.82rem', padding: '.3rem .5rem', background: 'transparent', border: '1px solid currentColor', borderRadius: '6px' }}
+                        style={{ color: p.is_active ? 'var(--danger)' : 'var(--success)', margin: 0, fontSize: '.82rem', padding: '.3rem .5rem', background: 'transparent', border: '1px solid currentColor', borderRadius: '6px' }}
                         disabled={toggling[p.id]}
                         onClick={() => handleToggle(p.id, p.is_active)}
                       >
                         {toggling[p.id] ? '…' : p.is_active ? 'Deactivate' : 'Activate'}
                       </button>
                     ) : (
-                      <span style={{ fontSize: '.78rem', color: '#637089' }}>Your account</span>
+                      <span style={{ fontSize: '.78rem', color: 'var(--text-secondary)' }}>Your account</span>
                     )}
                   </td>
                 </tr>

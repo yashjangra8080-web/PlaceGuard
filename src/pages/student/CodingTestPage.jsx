@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 
 // CodingTestPage — functional stub with code editor textarea.
 // Full Judge0 execution can be enabled by configuring JUDGE0_API_URL as a Supabase secret
@@ -50,7 +50,7 @@ export default function CodingTestPage() {
       <div className="coding-panels">
         {/* Problem panel */}
         <div className="coding-problem">
-          <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
+          <div style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
             <strong style={{ fontSize: 12, color: '#92400e' }}>ℹ️ Coding execution requires Judge0 API configuration.</strong>
             <div style={{ fontSize: 11.5, color: '#78350f', marginTop: 4 }}>
               This environment is intentionally disabled until an isolated Judge0 integration is configured. No code or result is recorded.
@@ -62,7 +62,7 @@ export default function CodingTestPage() {
             The problem statement for this round will appear here once the assessment is configured with a coding problem.
           </p>
 
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px' }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '12px 14px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Sample Input
             </div>
@@ -71,7 +71,7 @@ export default function CodingTestPage() {
             </pre>
           </div>
 
-          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 8, padding: '12px 14px', marginTop: 10 }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '12px 14px', marginTop: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>
               Sample Output
             </div>

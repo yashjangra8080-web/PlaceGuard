@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getMyProposals } from '../../services/drives'
@@ -20,7 +20,7 @@ export default function Proposals() {
     return () => { live = false }
   }, [profile.id])
 
-  if (loading) return <div className="page-state">Loading your proposals…</div>
+  if (loading) return <div className="page-state"><div className="loading-spinner" /><span>Loading your proposals…</span></div>
 
   return (
     <section>
@@ -66,7 +66,7 @@ export default function Proposals() {
                   )}
                   <span><strong>Submitted:</strong> {new Date(proposal.created_at).toLocaleString()}</span>
                 </div>
-                <div style={{ fontSize: '.85rem', background: '#f7f9fa', padding: '.65rem', borderRadius: '7px', color: '#334258' }}>
+                <div style={{ fontSize: '.85rem', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', padding: '.65rem', borderRadius: '7px', color: 'var(--text-secondary)' }}>
                   <strong>Reason:</strong> {proposal.reason}
                 </div>
                 {proposal.status === 'BLOCKED' && (

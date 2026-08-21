@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getPendingProposals, getAnomalyAlerts, getGovernanceDrives } from '../../services/drives'
@@ -124,8 +124,8 @@ export default function TnpDashboard() {
         {aiGov && (
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {aiGov.status_overview && (
-              <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 8, padding: '12px 16px' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 }}>Status Overview</div>
+              <div style={{ background: 'var(--purple-bg)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 }}>Status Overview</div>
                 <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: 0 }}>{aiGov.status_overview}</p>
               </div>
             )}
@@ -133,7 +133,7 @@ export default function TnpDashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {Array.isArray(aiGov.key_actions_required) && aiGov.key_actions_required.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>⚡ Key Actions Required</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--warning)', marginBottom: 6 }}>Key Actions Required</div>
                   <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {aiGov.key_actions_required.map((a, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{a}</li>)}
                   </ul>
@@ -141,7 +141,7 @@ export default function TnpDashboard() {
               )}
               {Array.isArray(aiGov.risk_flags) && aiGov.risk_flags.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>🚩 Risk Flags</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--danger)', marginBottom: 6 }}>Risk Flags</div>
                   <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {aiGov.risk_flags.map((r, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{r}</li>)}
                   </ul>
@@ -151,10 +151,10 @@ export default function TnpDashboard() {
 
             {Array.isArray(aiGov.positive_signals) && aiGov.positive_signals.length > 0 && (
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginBottom: 6 }}>✓ Positive Signals</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)', marginBottom: 6 }}>Positive Signals</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {aiGov.positive_signals.map((s, i) => (
-                    <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: '#d1fae5', color: '#065f46', borderRadius: 6, border: '1px solid #6ee7b7' }}>{s}</span>
+                    <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--success-bg)', color: 'var(--success)', borderRadius: 6, border: '1px solid var(--success-border)' }}>{s}</span>
                   ))}
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function TnpDashboard() {
       </article>
 
       {loading ? (
-        <div className="page-state" style={{ minHeight: '30vh' }}>Loading integrity data…</div>
+        <div className="page-state" style={{ minHeight: '30vh' }}><div className="loading-spinner" /><span>Loading integrity data…</span></div>
       ) : (
         <>
           <div className="metric-grid" style={{ marginBottom: '1rem' }}>
@@ -181,14 +181,14 @@ export default function TnpDashboard() {
             </article>
             <article className="metric">
               <span>Open anomalies</span>
-              <strong style={{ color: anomalyCount > 0 ? '#a3322c' : '#146647' }}>
+              <strong style={{ color: anomalyCount > 0 ? 'var(--danger)' : 'var(--success)' }}>
                 {anomalyCount ?? '—'}
               </strong>
               <small>{anomalyCount === 0 ? 'No open anomalies' : 'Integrity alerts'}</small>
             </article>
             <article className="metric">
               <span>Audit integrity</span>
-              <strong style={{ color: integrity?.valid === false ? '#a3322c' : '#146647' }}>
+              <strong style={{ color: integrity?.valid === false ? 'var(--danger)' : 'var(--success)' }}>
                 {integrity === null ? '—' : integrity.valid ? 'Verified' : 'FAILURE'}
               </strong>
               <small>
@@ -285,17 +285,17 @@ export default function TnpDashboard() {
                     <div className="anomaly-info">
                       <strong>{a.type}</strong>
                       <small>{a.description}</small>
-                      {a.drives?.title && <small style={{ color: '#42526a' }}>Drive: {a.drives.title}</small>}
+                      {a.drives?.title && <small style={{ color: 'var(--text-secondary)' }}>Drive: {a.drives.title}</small>}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem', alignItems: 'flex-end' }}>
                       <span className={`badge badge-${a.severity}`}>{a.severity}</span>
-                      <span style={{ fontSize: '.78rem', color: '#637089' }}>Risk: {a.risk_score}</span>
+                      <span style={{ fontSize: '.78rem', color: 'var(--text-secondary)' }}>Risk: {a.risk_score}</span>
                     </div>
                   </div>
                 ))
               )}
               {anomalyCount > 5 && (
-                <p style={{ fontSize: '.82rem', color: '#637089', marginTop: '.75rem', textAlign: 'center' }}>
+                <p style={{ fontSize: '.82rem', color: 'var(--text-secondary)', marginTop: '.75rem', textAlign: 'center' }}>
                   +{anomalyCount - 5} more open anomalies.
                 </p>
               )}

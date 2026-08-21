@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -13,7 +13,7 @@ import {
 } from '../../services/assessments'
 import { generateQuestions, saveAiGeneratedQuestions } from '../../services/ai'
 
-const DIFFICULTY_COLORS = { EASY: '#059669', MEDIUM: '#d97706', HARD: '#dc2626' }
+const DIFFICULTY_COLORS = { EASY: 'var(--success)', MEDIUM: 'var(--warning)', HARD: 'var(--danger)' }
 const ROUND_TYPE_LABELS = {
   APTITUDE: 'Aptitude', CODING: 'Coding', TECHNICAL_INTERVIEW: 'Tech Interview',
   HR_INTERVIEW: 'HR Interview', SQL_ASSESSMENT: 'SQL', LINUX_ASSESSMENT: 'Linux',
@@ -277,7 +277,9 @@ function AiGenerator({ companyId, assessmentId, roundType, onDraftsCreated }) {
       const { rejectAiQuestion } = await import('../../services/assessments')
       await rejectAiQuestion(draft.id)
       setDrafts(prev => prev.filter((_, j) => j !== i))
-    } catch { /* ignore */ }
+    } catch (e) {
+      setErr(e.message || 'Failed to reject question. Please try again.')
+    }
   }
 
   return (
@@ -318,14 +320,14 @@ function AiGenerator({ companyId, assessmentId, roundType, onDraftsCreated }) {
         <button className="primary-button" style={{ marginTop: 16, background: '#7c3aed' }} onClick={handleGenerate} disabled={busy}>
           {busy ? '✨ Generating…' : '✨ Generate Questions'}
         </button>
-        {busy && <p style={{ fontSize: 12, color: '#6d28d9', marginTop: 8 }}>Calling Gemini — this may take 10–20 seconds…</p>}
+        {busy && <p style={{ fontSize: 12, color: 'var(--purple)', marginTop: 8 }}>Calling Gemini — this may take 10–20 seconds…</p>}
       </div>
 
       {drafts.length > 0 && (
         <div className="panel">
           <div className="panel-heading">
             <h3>AI Draft Questions ({drafts.length})</h3>
-            <p style={{ fontSize: 12, color: '#64748b' }}>Review and approve questions to add them to the assessment.</p>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Review and approve questions to add them to the assessment.</p>
           </div>
           {drafts.map((d, i) => {
             const msg = approveMsg[i]
@@ -336,16 +338,16 @@ function AiGenerator({ companyId, assessmentId, roundType, onDraftsCreated }) {
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                   <span className="badge badge-ai">AI Generated</span>
                   <span style={{ fontSize: 11, color: DIFFICULTY_COLORS[d.difficulty] || '#64748b', fontWeight: 700 }}>{d.difficulty}</span>
-                  <span style={{ fontSize: 11, color: '#64748b' }}>{d.topic}</span>
-                  <span style={{ fontSize: 11, color: '#64748b' }}>{d.marks} mark(s)</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{d.topic}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{d.marks} mark(s)</span>
                 </div>
                 <div style={{ fontSize: 13.5, fontWeight: 500, marginBottom: 10 }}>{d.question_text}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {(Array.isArray(d.options) ? d.options : []).map((o, oi) => (
                     <div key={oi} style={{
                       fontSize: 12.5, padding: '5px 10px', borderRadius: 6,
-                      background: o.is_correct ? '#d1fae5' : '#f8fafc',
-                      color: o.is_correct ? '#065f46' : '#475569',
+                      background: o.is_correct ? 'var(--success-bg)' : 'rgba(255,255,255,0.02)',
+                      color: o.is_correct ? 'var(--success)' : 'var(--text-secondary)',
                       fontWeight: o.is_correct ? 600 : 400,
                       border: `1px solid ${o.is_correct ? '#6ee7b7' : '#e2e8f0'}`,
                     }}>
@@ -354,7 +356,7 @@ function AiGenerator({ companyId, assessmentId, roundType, onDraftsCreated }) {
                   ))}
                 </div>
                 {d.explanation && (
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#4338ca', background: '#eef2ff', padding: '6px 10px', borderRadius: 6 }}>
+                  <div style={{ marginTop: 8, fontSize: 12, color: 'var(--accent-mid)', background: 'var(--accent-light)', padding: '6px 10px', borderRadius: 6 }}>
                     💡 {d.explanation}
                   </div>
                 )}
@@ -475,7 +477,7 @@ export default function AssessmentManager() {
             <div className="assessment-status-dot" style={{ width: 10, height: 10, borderRadius: '50%', background: assessment.is_active ? '#059669' : '#94a3b8', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <strong style={{ fontSize: 15 }}>{assessment.title}</strong>
-              <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                 {assessment.duration_minutes} min · {questions.length} questions · Max: {assessment.max_score ?? '—'} marks
                 {assessment.passing_score != null && ` · Pass: ${assessment.passing_score}`}
                 {assessment.negative_marking && ` · Negative marking (−${assessment.negative_fraction})`}
@@ -487,7 +489,7 @@ export default function AssessmentManager() {
                 onClick={handleToggleActive}
                 disabled={toggling}
               >
-                {toggling ? 'Updating…' : assessment.is_active ? 'Deactivate' : '▶ Activate'}
+                {toggling ? 'Updating…' : assessment.is_active ? 'Deactivate' : 'Activate'}
               </button>
             </div>
           </div>
@@ -500,7 +502,7 @@ export default function AssessmentManager() {
 
           {/* Tabs */}
           <div className="tab-bar">
-            {[['questions', 'Questions'], ['add', 'Add Question'], ['ai', '✨ AI Generate']].map(([id, label]) => (
+            {[['questions', 'Questions'], ['add', 'Add Question'], ['ai', 'AI Generate']].map(([id, label]) => (
               <button key={id} className={`tab-btn${tab === id ? ' active' : ''}`} onClick={() => setTab(id)}>
                 {label}
               </button>
@@ -516,16 +518,16 @@ export default function AssessmentManager() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {questions.map((q, qi) => (
                     <div key={q.id} className="panel" style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '14px 18px' }}>
-                      <div style={{ width: 28, height: 28, background: '#4f46e5', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                      <div style={{ width: 28, height: 28, background: 'var(--accent)', color: 'var(--text-primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
                         {qi + 1}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 500, marginBottom: 6 }}>{q.question_text}</div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           {q.ai_generated && <span className="badge badge-ai">AI</span>}
-                          <span style={{ fontSize: 11, color: DIFFICULTY_COLORS[q.difficulty] || '#64748b', fontWeight: 700 }}>{q.difficulty}</span>
-                          <span style={{ fontSize: 11, color: '#64748b' }}>{q.topic}</span>
-                          <span style={{ fontSize: 11, color: '#4f46e5', fontWeight: 700 }}>{q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
+                          <span style={{ fontSize: 11, color: DIFFICULTY_COLORS[q.difficulty] || 'var(--text-secondary)', fontWeight: 700 }}>{q.difficulty}</span>
+                          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{q.topic}</span>
+                          <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700 }}>{q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
                         </div>
                       </div>
                       <button className="btn-danger btn-xs" onClick={() => handleRemoveQuestion(q.id)}>Remove</button>

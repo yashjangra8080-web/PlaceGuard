@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getPendingChangeRequests, getAdminChangeRequests, approveAdminChange } from '../../services/assessments'
 
@@ -34,20 +34,20 @@ function DecisionModal({ request, onClose, onSubmit }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: '28px 32px', maxWidth: 480, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
-        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Review Change Request</h3>
-        <p style={{ fontSize: 12.5, color: '#64748b', marginBottom: 16 }}>{request.action} on {request.entity_type}</p>
+    <div className="modal-backdrop">
+      <div style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border-2)', borderRadius: 14, padding: '28px 32px', maxWidth: 480, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4, color: 'var(--text-primary)' }}>Review Change Request</h3>
+        <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 16 }}>{request.action} on {request.entity_type}</p>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginBottom: 4 }}>REASON FROM ADMIN</div>
-          <p style={{ fontSize: 13, margin: 0 }}>{request.reason}</p>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>REASON FROM ADMIN</div>
+          <p style={{ fontSize: 13, margin: 0, color: 'var(--text-primary)' }}>{request.reason}</p>
         </div>
 
         {request.new_value && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#064e3b', marginBottom: 4 }}>PROPOSED CHANGE</div>
-            <pre style={{ fontSize: 12, margin: 0, color: '#065f46', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          <div style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 4 }}>PROPOSED CHANGE</div>
+            <pre style={{ fontSize: 12, margin: 0, color: 'var(--success)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
               {JSON.stringify(request.new_value, null, 2)}
             </pre>
           </div>
@@ -60,8 +60,8 @@ function DecisionModal({ request, onClose, onSubmit }) {
             onClick={() => setDecision('APPROVED')}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13,
-              background: decision === 'APPROVED' ? '#059669' : '#d1fae5',
-              color: decision === 'APPROVED' ? 'white' : '#065f46',
+              background: decision === 'APPROVED' ? 'var(--success)' : 'var(--success-bg)',
+              color: decision === 'APPROVED' ? '#fff' : 'var(--success)',
               border: `2px solid ${decision === 'APPROVED' ? '#059669' : '#6ee7b7'}`,
             }}
           >
@@ -71,8 +71,8 @@ function DecisionModal({ request, onClose, onSubmit }) {
             onClick={() => setDecision('REJECTED')}
             style={{
               flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13,
-              background: decision === 'REJECTED' ? '#dc2626' : '#fee2e2',
-              color: decision === 'REJECTED' ? 'white' : '#991b1b',
+              background: decision === 'REJECTED' ? 'var(--danger)' : 'var(--danger-bg)',
+              color: decision === 'REJECTED' ? '#fff' : 'var(--danger)',
               border: `2px solid ${decision === 'REJECTED' ? '#dc2626' : '#fca5a5'}`,
             }}
           >
@@ -137,17 +137,17 @@ export default function ChangeRequests() {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <span className={`badge ${STATUS_BADGE[req.status] || 'badge-PENDING'}`}>{req.status?.replace('_', ' ')}</span>
-            <span style={{ fontSize: 11, color: '#64748b' }}>{formatDate(req.created_at)}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{formatDate(req.created_at)}</span>
           </div>
           <div style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 4 }}>{req.action}</div>
-          <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
             Entity: <strong>{req.entity_type}</strong> · ID: <code style={{ fontSize: 10 }}>{req.entity_id}</code>
           </div>
-          <div style={{ fontSize: 13, color: '#334155', background: '#f8fafc', borderRadius: 8, padding: '8px 12px', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-primary)', background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '8px 12px', border: '1px solid var(--card-border)' }}>
             {req.reason}
           </div>
           {req.change_request_approvals?.[0] && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#64748b', background: req.status === 'APPROVED' ? '#d1fae5' : '#fee2e2', borderRadius: 8, padding: '6px 10px' }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)', background: req.status === 'APPROVED' ? 'var(--success-bg)' : 'var(--danger-bg)', borderRadius: 8, padding: '6px 10px' }}>
               <strong>T&P decision:</strong> {req.change_request_approvals[0].decision} — {req.change_request_approvals[0].reason}
             </div>
           )}

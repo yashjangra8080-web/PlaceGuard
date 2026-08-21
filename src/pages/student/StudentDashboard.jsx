@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getStudentRecord, getOpenDrives, getStudentApplications } from '../../services/drives'
@@ -6,9 +6,9 @@ import { getMyApplicationRounds } from '../../services/rounds'
 import { getAssessmentForRound } from '../../services/assessments'
 import { applyToDrive } from '../../services/placement'
 
-// ── Test Queue ────────────────────────────────────────────────────────────────
-// Discovers all PENDING rounds across the student's applications and checks
-// each for an active assessment. Shows a compact action bar if tests exist.
+// -- Test Queue -----------------------------------------------------------------
+// Discovers all PENDING rounds across the student's applications and shows
+// a compact action bar if active assessments exist.
 function TestQueue({ studentId }) {
   const navigate = useNavigate()
   const [items, setItems] = useState(null)   // null=loading
@@ -17,11 +17,9 @@ function TestQueue({ studentId }) {
     let live = true
     async function load() {
       try {
-        // Get applications
         const apps = await getStudentApplications(studentId)
         if (!live || !apps.length) { if (live) setItems([]); return }
 
-        // For each app, fetch rounds, filter PENDING, check assessment
         const results = []
         await Promise.all(apps.map(async (app) => {
           try {
@@ -34,8 +32,8 @@ function TestQueue({ studentId }) {
                 results.push({
                   roundId: r.round_id,
                   roundName: r.name,
-                  driveName: app.drives?.title || '—',
-                  companyName: app.drives?.companies?.company_name || '—',
+                  driveName: app.drives?.title || '�',
+                  companyName: app.drives?.companies?.company_name || '�',
                   assessmentId: asmt.assessment_id,
                   durationMinutes: asmt.duration_minutes,
                   totalQuestions: asmt.total_questions,
@@ -43,9 +41,9 @@ function TestQueue({ studentId }) {
                   existingAttemptId: asmt.existing_attempt_id,
                   resultId: asmt.result_id,
                 })
-              } catch { /* skip */ }
+              } catch { /* skip individual round errors */ }
             }))
-          } catch { /* skip */ }
+          } catch { /* skip individual app errors */ }
         }))
 
         if (live) setItems(results)
@@ -57,74 +55,60 @@ function TestQueue({ studentId }) {
     return () => { live = false }
   }, [studentId])
 
-  if (items === null) return null   // silent loading — don't distract from main page
+  if (items === null) return null   // silent loading
   if (items.length === 0) return null
 
   return (
-    <div className="panel" style={{ marginBottom: '1.5rem', border: '1.5px solid #4f46e5', background: '#eef2ff' }}>
-      <div className="panel-heading">
-        <div>
-          <h3 style={{ color: '#3730a3', marginBottom: 2 }}>📝 Tests Ready to Take</h3>
-          <p style={{ fontSize: 12.5, color: '#4f46e5', margin: 0 }}>
-            You have {items.length} active assessment{items.length !== 1 ? 's' : ''} waiting.
-          </p>
-        </div>
+    <div className="test-queue-panel">
+      <div className="test-queue-heading">
+        <div className="test-queue-title">Tests Ready to Take</div>
+        <span className="test-queue-count">{items.length} active</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-        {items.map((item, i) => {
-          const isInProgress = item.existingStatus === 'IN_PROGRESS'
-          const isSubmitted  = item.existingStatus === 'SUBMITTED'
+      {items.map((item, i) => {
+        const isInProgress = item.existingStatus === 'IN_PROGRESS'
+        const isSubmitted  = item.existingStatus === 'SUBMITTED'
 
-          return (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-              background: 'white', border: '1px solid #c7d2fe', borderRadius: 10,
-              padding: '12px 16px',
-            }}>
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e1b4b' }}>{item.roundName}</div>
-                <div style={{ fontSize: 12, color: '#4f46e5', marginTop: 2 }}>
-                  {item.companyName} · {item.driveName}
-                </div>
-                <div style={{ fontSize: 11.5, color: '#64748b', marginTop: 2 }}>
-                  {item.durationMinutes} min · {item.totalQuestions} questions
-                </div>
+        return (
+          <div key={i} className="test-queue-item">
+            <div className="test-queue-info">
+              <div className="test-queue-round">{item.roundName}</div>
+              <div className="test-queue-meta">
+                {item.companyName} &middot; {item.driveName} &middot; {item.durationMinutes} min &middot; {item.totalQuestions} questions
               </div>
-
-              {isSubmitted && item.resultId ? (
-                <Link
-                  to={`/student/test/${item.assessmentId}/result/${item.existingAttemptId}`}
-                  className="secondary-button btn-sm"
-                  style={{ fontSize: 12 }}
-                >
-                  📊 View Result
-                </Link>
-              ) : isInProgress ? (
-                <button
-                  className="primary-button btn-sm"
-                  style={{ background: '#d97706', fontSize: 13 }}
-                  onClick={() => navigate(`/student/test/${item.assessmentId}`)}
-                >
-                  ▶ Resume Test
-                </button>
-              ) : (
-                <button
-                  className="primary-button btn-sm"
-                  style={{ background: '#059669', fontSize: 13, fontWeight: 700 }}
-                  onClick={() => navigate(`/student/test/${item.assessmentId}`)}
-                >
-                  📝 Start Test →
-                </button>
-              )}
             </div>
-          )
-        })}
-      </div>
+
+            {isSubmitted && item.resultId ? (
+              <Link
+                to={`/student/test/${item.assessmentId}/result/${item.existingAttemptId}`}
+                className="secondary-button btn-sm"
+              >
+                View Result
+              </Link>
+            ) : isInProgress ? (
+              <button
+                className="primary-button btn-sm"
+                style={{ background: 'var(--warning)' }}
+                onClick={() => navigate(`/student/test/${item.assessmentId}`)}
+              >
+                Resume Test
+              </button>
+            ) : (
+              <button
+                className="primary-button btn-sm"
+                style={{ background: 'var(--success)' }}
+                onClick={() => navigate(`/student/test/${item.assessmentId}`)}
+              >
+                Start Test
+              </button>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
-// ── Main Dashboard ────────────────────────────────────────────────────────────
+// -- Main Dashboard -------------------------------------------------------------
 export default function StudentDashboard() {
   const { profile } = useAuth()
   const [student, setStudent] = useState(null)
@@ -177,7 +161,7 @@ export default function StudentDashboard() {
   if (loading) return (
     <div className="page-state">
       <div className="loading-spinner" />
-      <span>Loading available drives…</span>
+      <span>Loading available drives...</span>
     </div>
   )
 
@@ -189,7 +173,7 @@ export default function StudentDashboard() {
           <h2>Open Placement Drives</h2>
           <p>Eligibility is verified server-side the moment you apply.</p>
         </div>
-        <Link className="secondary-button" to="/student/applications">My applications →</Link>
+        <Link className="secondary-button" to="/student/applications">My applications</Link>
       </div>
 
       {error && <div className="alert error" style={{ marginBottom: '1rem' }}>{error}</div>}
@@ -200,11 +184,31 @@ export default function StudentDashboard() {
         </div>
       )}
 
-      {/* Test queue — only rendered when student record exists */}
+      {/* Test queue � only rendered when student record exists */}
       {student && <TestQueue studentId={student.id} />}
 
+      {/* How placement works � brief pipeline for new students */}
+      {drives.length > 0 && (
+        <div className="student-pipeline-strip">
+          <div className="student-pipeline-label">How placement works</div>
+          <div className="pipeline-track">
+            {['Apply', 'Eligibility', 'Assessment', 'Round 2+', 'Interview', 'Selection'].map((step, i) => (
+              <div key={step} className="pipeline-step">
+                {i > 0 && <div />}
+                <div className="pipeline-circle">{i + 1}</div>
+                <div className="pipeline-label">{step}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {drives.length === 0 ? (
-        <p className="empty-copy">No open placement drives are available right now.</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">&#x1F4CB;</div>
+          <div className="empty-state-title">No open drives right now</div>
+          <p className="empty-state-sub">Check back soon � placement drives will appear here when companies publish them.</p>
+        </div>
       ) : (
         <div className="drive-grid">
           {drives.map((drive) => {
@@ -216,10 +220,13 @@ export default function StudentDashboard() {
             const isPast = new Date(drive.deadline) <= new Date()
 
             return (
-              <article className="drive-card" key={drive.id}>
+              <article
+                className={`drive-card ${alreadyApplied ? 'drive-card-active-round' : ''}`}
+                key={drive.id}
+              >
                 <div className="drive-card-header">
                   <div>
-                    <span className="eyebrow">{drive.companies?.company_name || '—'}</span>
+                    <span className="eyebrow">{drive.companies?.company_name || '�'}</span>
                     <h3>{drive.title}</h3>
                     <p>{drive.role_name}</p>
                   </div>
@@ -243,7 +250,7 @@ export default function StudentDashboard() {
                 {/* Recruitment pipeline */}
                 {Array.isArray(drive.drive_rounds) && drive.drive_rounds.length > 0 && (
                   <div className="round-pipeline">
-                    <span className="round-pipeline-label">Recruitment rounds:</span>
+                    <span className="round-pipeline-label">Rounds:</span>
                     <div className="round-pipeline-track">
                       {[...drive.drive_rounds]
                         .sort((a, b) => a.round_number - b.round_number)
@@ -251,7 +258,7 @@ export default function StudentDashboard() {
                           <span key={r.round_number} className="round-pipeline-step">
                             <span className="round-pipeline-num">{r.round_number}</span>
                             <span className="round-pipeline-name">{r.name}</span>
-                            {i < arr.length - 1 && <span className="round-pipeline-arrow">→</span>}
+                            {i < arr.length - 1 && <span className="round-pipeline-arrow">&#x2192;</span>}
                           </span>
                         ))}
                     </div>
@@ -259,11 +266,11 @@ export default function StudentDashboard() {
                 )}
 
                 {drive.description && (
-                  <p style={{ fontSize: '.85rem', color: '#637089', margin: '.5rem 0 0' }}>{drive.description}</p>
+                  <p style={{ fontSize: '.85rem', color: 'var(--text-secondary)', margin: '.5rem 0 0' }}>{drive.description}</p>
                 )}
 
                 <div className="drive-card-footer">
-                  <small className={isPast ? 'text-danger' : ''}>
+                  <small className={isPast ? 'text-danger' : 'text-muted'}>
                     Deadline: {new Date(drive.deadline).toLocaleString()}
                     {isPast && ' (closed)'}
                   </small>
@@ -282,7 +289,7 @@ export default function StudentDashboard() {
                         disabled={!student || applying[drive.id] || isPast}
                         onClick={() => handleApply(drive.id)}
                       >
-                        {applying[drive.id] ? 'Applying…' : 'Apply'}
+                        {applying[drive.id] ? 'Applying...' : 'Apply'}
                       </button>
                     )}
                   </div>

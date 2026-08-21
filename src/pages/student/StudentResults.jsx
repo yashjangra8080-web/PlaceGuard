@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -107,7 +107,7 @@ export default function StudentResults() {
         </div>
       ) : results.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
+          
           <div className="empty-state-title">No results yet</div>
           <div className="empty-state-sub">
             Your test results will appear here after you complete and submit an assessment.
@@ -164,7 +164,7 @@ export default function StudentResults() {
                     <td style={{ textAlign: 'center' }}>
                       <span style={{
                         fontWeight: 800, fontSize: 15,
-                        color: pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626',
+                        color: pct >= 75 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)',
                       }}>
                         {r.total_score ?? 0}
                         <span style={{ fontWeight: 500, fontSize: 11, color: 'var(--text-tertiary)' }}>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getStudentRecord, getStudentApplications } from '../../services/drives'
@@ -10,8 +10,6 @@ const ROUND_TYPE_LABELS = {
   LINUX_ASSESSMENT: 'Linux/Net', CLOUD_ASSESSMENT: 'Cloud',
   TECHNICAL_INTERVIEW: 'Technical', HR_INTERVIEW: 'HR', ASSESSMENT: 'Assessment',
 }
-
-const DIFFICULTY_COLORS = { EASY: '#16a34a', MEDIUM: '#d97706', HARD: '#dc2626' }
 
 function TestCard({ item }) {
   const navigate = useNavigate()
@@ -29,27 +27,28 @@ function TestCard({ item }) {
     }
   }
 
+  // Status indicator dot + label (no emoji)
+  const statusColor = isSubmitted ? 'var(--success)' : isInProgress ? 'var(--warning)' : 'var(--accent-mid)'
+  const statusLabel = isSubmitted ? 'Submitted' : isInProgress ? 'In Progress' : 'Ready'
+
   return (
-    <article className="card" style={{ padding: '1.25rem 1.5rem' }}>
+    <article className="panel" style={{ padding: '1.25rem 1.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{
               fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.7,
-              color: '#818cf8', background: 'rgba(129,140,248,0.12)', padding: '2px 8px', borderRadius: 4,
+              color: 'var(--accent-mid)', background: 'rgba(129,140,248,0.12)', padding: '2px 8px', borderRadius: 4,
             }}>
               {ROUND_TYPE_LABELS[roundType] ?? roundType}
             </span>
-            {isSubmitted && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#16a34a', background: 'rgba(22,163,74,0.1)', padding: '2px 8px', borderRadius: 4 }}>
-                SUBMITTED
-              </span>
-            )}
-            {isInProgress && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#d97706', background: 'rgba(217,119,6,0.1)', padding: '2px 8px', borderRadius: 4 }}>
-                IN PROGRESS
-              </span>
-            )}
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4,
+              color: statusColor, background: statusColor + '18',
+              textTransform: 'uppercase', letterSpacing: 0.5,
+            }}>
+              {statusLabel}
+            </span>
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
             {roundName}
@@ -58,24 +57,27 @@ function TestCard({ item }) {
             {companyName} · {driveName}
           </div>
         </div>
+        {/* Status indicator square — no emoji */}
         <div style={{
-          width: 44, height: 44, borderRadius: 11, background: 'rgba(79,70,229,0.15)',
+          width: 44, height: 44, borderRadius: 11,
+          background: statusColor + '18',
+          border: `1.5px solid ${statusColor}35`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20, flexShrink: 0,
+          flexShrink: 0,
         }}>
-          {isSubmitted ? '✅' : isInProgress ? '⏱️' : '📝'}
+          <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor }} />
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>⏱</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}>
             {durationMinutes} min
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>📋</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="2" strokeLinecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           <span style={{ fontSize: 12.5, color: 'var(--text-secondary)', fontWeight: 500 }}>
             {totalQuestions ?? '—'} questions
           </span>
@@ -85,15 +87,15 @@ function TestCard({ item }) {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {isSubmitted ? (
           <button className="secondary-button btn-sm" onClick={handleAction}>
-            📊 View Result
+            View Result
           </button>
         ) : isInProgress ? (
-          <button className="primary-button btn-sm" onClick={handleAction} style={{ background: '#d97706' }}>
-            ▶ Resume Test
+          <button className="primary-button btn-sm" onClick={handleAction} style={{ background: 'var(--warning)' }}>
+            Resume Test
           </button>
         ) : (
           <button className="primary-button btn-sm" onClick={handleAction}>
-            ▶ Start Test
+            Start Test
           </button>
         )}
       </div>
@@ -179,12 +181,11 @@ export default function StudentTests() {
         <>
           {/* Active / available tests */}
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: '1rem' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>
               Available Tests ({active.length})
             </div>
             {active.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-state-icon">📋</div>
                 <div className="empty-state-title">No active tests</div>
                 <div className="empty-state-sub">
                   Tests will appear here when companies activate assessments for your pending rounds.
@@ -202,7 +203,7 @@ export default function StudentTests() {
           {/* Submitted tests */}
           {submitted.length > 0 && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: '1rem' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: '1rem' }}>
                 Submitted ({submitted.length})
               </div>
               <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>

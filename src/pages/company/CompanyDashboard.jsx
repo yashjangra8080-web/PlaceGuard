@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import {
@@ -36,11 +36,11 @@ function KpiCard({ icon, label, value, trend, trendDir = 'up', color, accentClas
           fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
           letterSpacing: 0.8, color: 'var(--text-secondary)', display: 'block', marginBottom: 14,
         }}>{label}</span>
-        <div style={{
+        {icon && <div style={{
           width: 34, height: 34, borderRadius: 9,
           background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 16, flexShrink: 0,
-        }}>{icon}</div>
+        }}>{icon}</div>}
       </div>
       <strong style={{ fontSize: 32, fontWeight: 800, letterSpacing: -1.5, lineHeight: 1, display: 'block', color: 'var(--text-primary)' }}>
         {value}
@@ -347,7 +347,7 @@ export default function CompanyDashboard() {
             Company Portal
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.6, marginBottom: 4 }}>
-            {greeting}, {profile?.name?.split(' ')[0] || 'there'}! 👋
+            {greeting}, {profile?.name?.split(' ')[0] || 'there'}
           </h1>
           <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
             {companyName} · Track, assess, and hire the best talent with PlaceGuard.
@@ -355,10 +355,10 @@ export default function CompanyDashboard() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <Link className="secondary-button btn-sm" to="/company/assessments">
-            🧪 Assessments
+            Assessments
           </Link>
           <button className="primary-button btn-sm" onClick={() => setShowForm(v => !v)}>
-            {showForm ? '✕ Cancel' : '+ Create Drive'}
+            {showForm ? 'Cancel' : '+ Create Drive'}
           </button>
         </div>
       </div>
@@ -380,7 +380,7 @@ export default function CompanyDashboard() {
           {/* KPI Grid */}
           <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))', marginBottom: 24 }}>
             <KpiCard
-              icon="📋" label="Total Applications"
+              icon={null} label="Total Applications"
               value={metrics.applications}
               trend="Live database count" trendDir="up"
               color="#6366f1" accentClass="kpi-accent"
@@ -388,7 +388,7 @@ export default function CompanyDashboard() {
               sparkColor="#6366f1"
             />
             <KpiCard
-              icon="⚡" label="In Assessment"
+              icon={null} label="In Assessment"
               value={metrics.in_assessment}
               trend="Live database count" trendDir="up"
               color="#f59e0b" accentClass="kpi-warning"
@@ -396,7 +396,7 @@ export default function CompanyDashboard() {
               sparkColor="#f59e0b"
             />
             <KpiCard
-              icon="🎯" label="Shortlisted"
+              icon={null} label="Shortlisted"
               value={metrics.shortlisted}
               trend="Live database count" trendDir="up"
               color="#10b981" accentClass="kpi-success"
@@ -437,7 +437,7 @@ export default function CompanyDashboard() {
                 <FunnelBar icon="📬" label="Applications Received" count={metrics.applications} pct={100} color="#6366f1" />
                 <FunnelBar icon="📝" label="In Assessment" count={metrics.in_assessment} pct={metrics.applications ? (metrics.in_assessment / metrics.applications) * 100 : 0} color="#38bdf8" />
                 <FunnelBar icon="👥" label="Shortlisted" count={metrics.shortlisted} pct={metrics.applications ? (metrics.shortlisted / metrics.applications) * 100 : 0} color="#10b981" />
-                <FunnelBar icon="✅" label="Selected" count={metrics.selected} pct={metrics.applications ? (metrics.selected / metrics.applications) * 100 : 0} color="#2dd4bf" />
+                <FunnelBar icon={null} label="Selected" count={metrics.selected} pct={metrics.applications ? (metrics.selected / metrics.applications) * 100 : 0} color="#2dd4bf" />
                 <FunnelBar icon="✕" label="Rejected" count={metrics.rejected} pct={metrics.applications ? (metrics.rejected / metrics.applications) * 100 : 0} color="#ef4444" />
               </div>
             </div>
@@ -753,7 +753,7 @@ export default function CompanyDashboard() {
                     <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>⚠ Common Weak Areas Across Candidates</div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {aiSummary.common_weak_areas.map((a, i) => (
-                        <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: '#fee2e2', color: '#991b1b', borderRadius: 6, border: '1px solid #fca5a5' }}>{a}</span>
+                        <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 6, border: '1px solid var(--danger-border)' }}>{a}</span>
                       ))}
                     </div>
                   </div>
@@ -827,8 +827,8 @@ export default function CompanyDashboard() {
                         <div style={{ marginBottom: 16 }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>Suggested Eligibility</div>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {plannerResult.suggested_eligibility.min_cgpa && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg, #eff6ff)', color: 'var(--info, #1d4ed8)', borderRadius: 6, border: '1px solid #bfdbfe' }}>Min CGPA: {plannerResult.suggested_eligibility.min_cgpa}</span>}
-                            {plannerResult.suggested_eligibility.max_backlogs != null && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg, #eff6ff)', color: 'var(--info, #1d4ed8)', borderRadius: 6, border: '1px solid #bfdbfe' }}>Max Backlogs: {plannerResult.suggested_eligibility.max_backlogs}</span>}
+                            {plannerResult.suggested_eligibility.min_cgpa && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg)', color: 'var(--info)', borderRadius: 6, border: '1px solid var(--info-border)' }}>Min CGPA: {plannerResult.suggested_eligibility.min_cgpa}</span>}
+                            {plannerResult.suggested_eligibility.max_backlogs != null && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg)', color: 'var(--info)', borderRadius: 6, border: '1px solid var(--info-border)' }}>Max Backlogs: {plannerResult.suggested_eligibility.max_backlogs}</span>}
                             {Array.isArray(plannerResult.suggested_eligibility.allowed_branches) && plannerResult.suggested_eligibility.allowed_branches.map((b, i) => (
                               <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: 'rgba(16,185,129,0.08)', color: '#065f46', borderRadius: 6, border: '1px solid #6ee7b7' }}>{b}</span>
                             ))}
@@ -846,7 +846,7 @@ export default function CompanyDashboard() {
                                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 4 }}>
                                   <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>Round {round.round_number}: {round.name}</span>
                                   <span style={{ fontSize: 10.5, padding: '2px 8px', background: 'var(--purple-bg)', color: 'var(--purple)', borderRadius: 5, fontWeight: 700 }}>{round.round_type}</span>
-                                  {round.is_elimination && <span style={{ fontSize: 10.5, padding: '2px 8px', background: '#fee2e2', color: '#991b1b', borderRadius: 5, fontWeight: 700 }}>Elimination</span>}
+                                  {round.is_elimination && <span style={{ fontSize: 10.5, padding: '2px 8px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 5, fontWeight: 700 }}>Elimination</span>}
                                 </div>
                                 <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                                   {round.duration_minutes && `${round.duration_minutes} min`}
