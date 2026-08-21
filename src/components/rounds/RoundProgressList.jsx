@@ -78,7 +78,7 @@ export default function RoundProgressList({ rounds, studentView = true, onEvalua
               <span className="round-status-chip" style={{ color: cfg.color, background: cfg.color + '18' }}>
                 {cfg.icon} {cfg.label}
               </span>
-              {!studentView && (r.status === 'PENDING' || r.status === 'ACTIVE') && onEvaluate && (
+              {!studentView && r.status === 'PENDING' && onEvaluate && (
                 <button
                   className="secondary-button"
                   style={{ fontSize: '.8rem', padding: '.3rem .75rem' }}

@@ -224,7 +224,8 @@ export default function MyApplications() {
     try {
       const rounds = await getMyApplicationRounds(appId)
       setRoundsMap(p => ({ ...p, [appId]: rounds }))
-    } catch {
+    } catch (err) {
+      setError(err.message || 'Failed to load rounds. Please try again.')
       setRoundsMap(p => ({ ...p, [appId]: [] }))
     } finally {
       setRoundsLoadingMap(p => ({ ...p, [appId]: false }))

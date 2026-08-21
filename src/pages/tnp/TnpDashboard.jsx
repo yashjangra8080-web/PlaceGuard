@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getPendingProposals, getAnomalyAlerts, getGovernanceDrives } from '../../services/drives'
 import { verifyAuditIntegrity } from '../../services/placement'
 import { useDashboardData } from '../../hooks/useDashboardData'
+import { governanceSummary } from '../../services/ai'
 
 export default function TnpDashboard() {
   const { profile } = useAuth()
@@ -15,6 +16,11 @@ export default function TnpDashboard() {
   const [drives, setDrives] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // AI governance summary — advisory only, never makes decisions
+  const [aiGov, setAiGov] = useState(null)
+  const [aiGovLoading, setAiGovLoading] = useState(false)
+  const [aiGovError, setAiGovError] = useState(null)
 
   useEffect(() => {
     let live = true
@@ -42,6 +48,24 @@ export default function TnpDashboard() {
     return () => { live = false }
   }, [profile.id])
 
+  const handleAiGovernanceSummary = async () => {
+    setAiGovLoading(true)
+    setAiGovError(null)
+    try {
+      const result = await governanceSummary({
+        drives: drives.map(d => ({ title: d.title, status: d.status, role: d.role_name })),
+        pending_approvals: pendingCount ?? 0,
+        anomalies: anomalies.map(a => ({ type: a.type, severity: a.severity, description: a.description })),
+        pending_changes: 0,
+      })
+      setAiGov(result.summary)
+    } catch (err) {
+      setAiGovError(err.message || 'AI governance summary temporarily unavailable.')
+    } finally {
+      setAiGovLoading(false)
+    }
+  }
+
   const activity = dashData?.activity ?? []
 
   return (
@@ -56,6 +80,92 @@ export default function TnpDashboard() {
       </div>
 
       {error && <div className="alert error" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+      {/* AI Governance Summary — advisory only */}
+      <article className="ai-panel" style={{ marginBottom: '1rem' }}>
+        <div className="ai-panel-header">
+          <div className="ai-icon">🏛️</div>
+          <div>
+            <div className="ai-panel-title">✨ AI Governance Summary</div>
+            <div className="ai-panel-sub">Powered by Gemini · Advisory only — T&P Head remains the governance authority</div>
+          </div>
+          {!aiGov && (
+            <button
+              className="primary-button btn-sm"
+              style={{ background: '#7c3aed', marginLeft: 'auto' }}
+              onClick={handleAiGovernanceSummary}
+              disabled={aiGovLoading || loading}
+            >
+              {aiGovLoading ? '✨ Generating…' : '✨ Get Summary'}
+            </button>
+          )}
+          {aiGov && (
+            <button className="secondary-button btn-sm" style={{ marginLeft: 'auto' }} onClick={() => { setAiGov(null); setAiGovError(null) }}>
+              Refresh
+            </button>
+          )}
+        </div>
+
+        {aiGovError && <div className="alert error" style={{ marginTop: 10 }}>{aiGovError}</div>}
+
+        {aiGovLoading && (
+          <div className="page-state" style={{ minHeight: 50, marginTop: 10 }}>
+            <div className="loading-spinner" />
+            <span>Calling Gemini — this may take 10–20 seconds…</span>
+          </div>
+        )}
+
+        {!aiGov && !aiGovLoading && !aiGovError && (
+          <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', margin: '10px 0 0' }}>
+            Click "Get Summary" to generate an AI advisory overview of current governance status based on real data.
+          </p>
+        )}
+
+        {aiGov && (
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {aiGov.status_overview && (
+              <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.18)', borderRadius: 8, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 }}>Status Overview</div>
+                <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.6, margin: 0 }}>{aiGov.status_overview}</p>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {Array.isArray(aiGov.key_actions_required) && aiGov.key_actions_required.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>⚡ Key Actions Required</div>
+                  <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {aiGov.key_actions_required.map((a, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{a}</li>)}
+                  </ul>
+                </div>
+              )}
+              {Array.isArray(aiGov.risk_flags) && aiGov.risk_flags.length > 0 && (
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>🚩 Risk Flags</div>
+                  <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {aiGov.risk_flags.map((r, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{r}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {Array.isArray(aiGov.positive_signals) && aiGov.positive_signals.length > 0 && (
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#059669', marginBottom: 6 }}>✓ Positive Signals</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {aiGov.positive_signals.map((s, i) => (
+                    <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: '#d1fae5', color: '#065f46', borderRadius: 6, border: '1px solid #6ee7b7' }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0, fontStyle: 'italic' }}>
+              {aiGov.disclaimer || 'AI-generated advisory summary. T&P Head remains the sole governance authority for all decisions.'}
+            </p>
+          </div>
+        )}
+      </article>
 
       {loading ? (
         <div className="page-state" style={{ minHeight: '30vh' }}>Loading integrity data…</div>

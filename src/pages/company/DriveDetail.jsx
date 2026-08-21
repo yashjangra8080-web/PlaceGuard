@@ -8,7 +8,7 @@ import {
   publishDrive,
   lockShortlist,
 } from '../../services/drives'
-import { getDriveApplicants, getDriveRounds } from '../../services/rounds'
+import { getDriveApplicants, getDriveRounds, addDriveRound } from '../../services/rounds'
 import { verifyAuditIntegrity } from '../../services/placement'
 import RoundProgressList from '../../components/rounds/RoundProgressList'
 import EvaluateRoundModal from '../../components/rounds/EvaluateRoundModal'
@@ -38,6 +38,15 @@ export default function DriveDetail() {
   const [evalTarget, setEvalTarget] = useState(null) // { applicationRound, round, studentName }
   const [tab, setTab] = useState('applicants') // 'applicants' | 'rounds' | 'audit'
 
+  // ── Round creation form state ──────────────────────────────────────────────
+  const [showRoundForm, setShowRoundForm] = useState(false)
+  const [roundForm, setRoundForm] = useState({
+    name: '', roundType: 'APTITUDE', description: '',
+    isElimination: true, passingScore: '', maxScore: '',
+  })
+  const [roundBusy, setRoundBusy] = useState(false)
+  const [roundError, setRoundError] = useState(null)
+
   const loadAll = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -57,7 +66,9 @@ export default function DriveDetail() {
       try {
         const apps = await getDriveApplicants(driveId)
         setApplicants(apps ?? [])
-      } catch {
+      } catch (err) {
+        // Surface the error so it's visible — don't silently return empty list
+        setError((prev) => prev ?? `Could not load applicants: ${err.message}`)
         setApplicants([])
       }
 
@@ -92,6 +103,34 @@ export default function DriveDetail() {
       setActionError(err.message)
     } finally {
       setActionBusy(false)
+    }
+  }
+
+  const handleAddRound = async (e) => {
+    e.preventDefault()
+    setRoundBusy(true)
+    setRoundError(null)
+    try {
+      const nextNumber = rounds.length + 1
+      await addDriveRound({
+        driveId,
+        roundNumber: nextNumber,
+        name: roundForm.name.trim(),
+        roundType: roundForm.roundType,
+        description: roundForm.description.trim(),
+        isElimination: roundForm.isElimination,
+        passingScore: roundForm.passingScore !== '' ? parseFloat(roundForm.passingScore) : null,
+        maxScore: roundForm.maxScore !== '' ? parseFloat(roundForm.maxScore) : null,
+      })
+      // Reset form and reload rounds list
+      setRoundForm({ name: '', roundType: 'APTITUDE', description: '', isElimination: true, passingScore: '', maxScore: '' })
+      setShowRoundForm(false)
+      const updated = await getDriveRounds(driveId)
+      setRounds(updated)
+    } catch (err) {
+      setRoundError(err.message)
+    } finally {
+      setRoundBusy(false)
     }
   }
 
@@ -269,19 +308,185 @@ export default function DriveDetail() {
 
       {/* ── TAB: Round Config ── */}
       {tab === 'rounds' && (
-        <div className="panel">
-          <div className="panel-heading">
-            <div>
-              <span className="eyebrow">ROUND CONFIGURATION</span>
-              <h3>Recruitment pipeline for this drive</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          {/* Header row */}
+          <div className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow">ROUND CONFIGURATION</span>
+                <h3>Recruitment pipeline for this drive</h3>
+              </div>
+              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
+                {drive.status === 'draft' && profile.role === 'company' && (
+                  <span className="badge" style={{ background: '#fffbeb', color: '#7a5c00' }}>
+                    Draft — rounds can still be added
+                  </span>
+                )}
+                {drive.status === 'draft' && profile.role === 'company' && !showRoundForm && (
+                  <button
+                    className="primary-button btn-sm"
+                    onClick={() => { setShowRoundForm(true); setRoundError(null) }}
+                  >
+                    + Add Round
+                  </button>
+                )}
+              </div>
             </div>
-            {drive.status === 'draft' && profile.role === 'company' && (
-              <span className="badge" style={{ background: '#fffbeb', color: '#7a5c00' }}>
-                Draft — rounds can still be added
-              </span>
+
+            {/* Existing rounds list */}
+            {rounds.length === 0 ? (
+              <p className="empty-copy" style={{ marginTop: '.75rem' }}>
+                No rounds configured yet.
+                {drive.status === 'draft' && profile.role === 'company' && ' Use "+ Add Round" above to configure the recruitment pipeline.'}
+              </p>
+            ) : (
+              <ol className="round-list" style={{ marginTop: '.75rem' }} aria-label="Configured rounds">
+                {rounds.map((r) => (
+                  <li key={r.id} className="round-item round-pending" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '.75rem 0', borderBottom: '1px solid var(--border)' }}>
+                    <div className="round-number-badge" style={{ background: '#0369a118', color: '#0369a1', width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                      {r.round_number}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: '.93rem' }}>
+                        {r.name}
+                        <span className="round-type-pill" style={{ marginLeft: '.4rem' }}>{r.round_type?.replace(/_/g, ' ')}</span>
+                        {r.is_elimination && <span className="round-elim-badge" style={{ marginLeft: '.3rem' }}>Elim</span>}
+                      </div>
+                      {r.description && <p className="round-desc" style={{ fontSize: '.82rem', color: '#637089', margin: '.2rem 0 0' }}>{r.description}</p>}
+                      {(r.max_score != null || r.passing_score != null) && (
+                        <span style={{ fontSize: '.8rem', color: '#637089' }}>
+                          {r.max_score != null && `Max: ${r.max_score}`}
+                          {r.max_score != null && r.passing_score != null && ' · '}
+                          {r.passing_score != null && `Pass: ${r.passing_score}`}
+                        </span>
+                      )}
+                    </div>
+                    {/* Link to assessment manager for this round */}
+                    <Link
+                      className="secondary-button btn-sm"
+                      to={`/company/drives/${driveId}/assessment/${r.id}`}
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      Manage Assessment →
+                    </Link>
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
-          <RoundProgressList rounds={rounds.map((r) => ({ ...r, status: r.status ?? 'PENDING' }))} studentView={false} />
+
+          {/* Add Round form — only shown for draft drives owned by company */}
+          {showRoundForm && drive.status === 'draft' && profile.role === 'company' && (
+            <div className="panel">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">NEW ROUND</span>
+                  <h3>Round {rounds.length + 1}</h3>
+                </div>
+                <button className="btn-ghost btn-sm" onClick={() => { setShowRoundForm(false); setRoundError(null) }}>✕ Cancel</button>
+              </div>
+
+              <form onSubmit={handleAddRound} style={{ display: 'flex', flexDirection: 'column', gap: '.85rem', marginTop: '.5rem' }}>
+                {/* Row 1: name + type */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Round name <span>*</span></label>
+                    <input
+                      className="form-input"
+                      required
+                      placeholder="e.g. Aptitude Test"
+                      value={roundForm.name}
+                      onChange={e => setRoundForm(f => ({ ...f, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Round type <span>*</span></label>
+                    <select
+                      className="form-input"
+                      value={roundForm.roundType}
+                      onChange={e => setRoundForm(f => ({ ...f, roundType: e.target.value }))}
+                    >
+                      <option value="APTITUDE">Aptitude</option>
+                      <option value="CODING">Coding</option>
+                      <option value="SQL_ASSESSMENT">SQL / Python</option>
+                      <option value="LINUX_ASSESSMENT">Linux / Networking</option>
+                      <option value="CLOUD_ASSESSMENT">Cloud Assessment</option>
+                      <option value="ASSESSMENT">General Assessment</option>
+                      <option value="TECHNICAL_INTERVIEW">Technical Interview</option>
+                      <option value="HR_INTERVIEW">HR Interview</option>
+                      <option value="GROUP_DISCUSSION">Group Discussion</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Row 2: description */}
+                <div className="form-group">
+                  <label className="form-label">Description / instructions</label>
+                  <textarea
+                    className="form-textarea"
+                    rows={2}
+                    placeholder="Optional — describe what this round tests"
+                    value={roundForm.description}
+                    onChange={e => setRoundForm(f => ({ ...f, description: e.target.value }))}
+                  />
+                </div>
+
+                {/* Row 3: scores + elimination */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Max score</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="e.g. 100"
+                      value={roundForm.maxScore}
+                      onChange={e => setRoundForm(f => ({ ...f, maxScore: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Passing score</label>
+                    <input
+                      className="form-input"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      placeholder="e.g. 60"
+                      value={roundForm.passingScore}
+                      onChange={e => setRoundForm(f => ({ ...f, passingScore: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group" style={{ justifyContent: 'flex-end' }}>
+                    <label className="form-label" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '.4rem', marginTop: '1.6rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={roundForm.isElimination}
+                        onChange={e => setRoundForm(f => ({ ...f, isElimination: e.target.checked }))}
+                      />
+                      Elimination round
+                    </label>
+                  </div>
+                </div>
+
+                {roundError && <div className="alert error">{roundError}</div>}
+
+                <div style={{ display: 'flex', gap: '.6rem' }}>
+                  <button className="primary-button" type="submit" disabled={roundBusy}>
+                    {roundBusy ? '⏳ Saving…' : `✓ Add Round ${rounds.length + 1}`}
+                  </button>
+                  <button type="button" className="secondary-button" onClick={() => { setShowRoundForm(false); setRoundError(null) }}>
+                    Cancel
+                  </button>
+                </div>
+                <p style={{ fontSize: '.8rem', color: 'var(--text-tertiary)', margin: 0 }}>
+                  After adding all rounds, go to each round's "Manage Assessment" to create and activate a Gemini-generated test.
+                </p>
+              </form>
+            </div>
+          )}
         </div>
       )}
 

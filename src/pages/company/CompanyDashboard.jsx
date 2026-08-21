@@ -8,6 +8,7 @@ import {
   createDriveWithRules,
   publishDrive,
 } from '../../services/drives'
+import { generateRecruitmentPlan, companyRecruitmentSummary } from '../../services/ai'
 
 // ─── Sparkline (pure CSS/SVG) ─────────────────────────────────────────────────
 function Sparkline({ values = [], color = '#6366f1' }) {
@@ -202,6 +203,18 @@ export default function CompanyDashboard() {
   const [formBusy, setFormBusy]   = useState(false)
   const [formError, setFormError] = useState(null)
 
+  // AI: recruitment summary (AI Insights tab)
+  const [aiSummary, setAiSummary] = useState(null)
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  const [aiSummaryError, setAiSummaryError] = useState(null)
+
+  // AI: recruitment planner (drive creation form)
+  const [showPlanner, setShowPlanner] = useState(false)
+  const [plannerForm, setPlannerForm] = useState({ role: '', skills: '', objective: '', difficulty: 'Medium' })
+  const [plannerResult, setPlannerResult] = useState(null)
+  const [plannerLoading, setPlannerLoading] = useState(false)
+  const [plannerError, setPlannerError] = useState(null)
+
   const loadData = async () => {
     setLoading(true); setError(null)
     try {
@@ -250,6 +263,53 @@ export default function CompanyDashboard() {
       setMetrics(metricsData)
     } catch (err) { setFormError(err.message) }
     finally { setFormBusy(false) }
+  }
+
+  const handleAiSummary = async () => {
+    setAiSummaryLoading(true)
+    setAiSummaryError(null)
+    try {
+      const funnel = {
+        'Applications Received': metrics.applications,
+        'In Assessment': metrics.in_assessment,
+        'Shortlisted': metrics.shortlisted,
+        'Selected': metrics.selected,
+        'Rejected': metrics.rejected,
+        'Open Drives': metrics.open_drives,
+        'Total Drives': metrics.drives,
+      }
+      const result = await companyRecruitmentSummary({
+        drive_title: `${company?.company_name || 'Company'} — All Drives`,
+        funnel,
+        analytics: null,
+      })
+      setAiSummary(result.summary)
+    } catch (err) {
+      setAiSummaryError(err.message || 'AI summary temporarily unavailable.')
+    } finally {
+      setAiSummaryLoading(false)
+    }
+  }
+
+  const handleAiPlan = async () => {
+    if (!plannerForm.role.trim()) { setPlannerError('Job role is required'); return }
+    setPlannerLoading(true)
+    setPlannerError(null)
+    setPlannerResult(null)
+    try {
+      const skills = plannerForm.skills.split(',').map(s => s.trim()).filter(Boolean)
+      const result = await generateRecruitmentPlan({
+        role: plannerForm.role,
+        skills,
+        objective: plannerForm.objective,
+        difficulty: plannerForm.difficulty,
+      })
+      setPlannerResult(result.plan)
+    } catch (err) {
+      setPlannerError(err.message || 'AI planner temporarily unavailable.')
+    } finally {
+      setPlannerLoading(false)
+    }
   }
 
   // ── Summary stats (computed from real drives) ──
@@ -600,14 +660,225 @@ export default function CompanyDashboard() {
 
       {/* ═══════════ AI INSIGHTS TAB ═══════════ */}
       {activeTab === 'ai' && (
-        <div className="panel">
-          <div className="panel-heading">
-            <div><span className="eyebrow">Advisory only</span><h3>AI Recruitment Intelligence</h3></div>
-            <Link className="primary-button btn-sm" to="/company/drives">Manage real assessments</Link>
+        <div>
+          {/* AI Recruitment Summary */}
+          <div className="panel" style={{ marginBottom: 20 }}>
+            <div className="panel-heading">
+              <div>
+                <span className="eyebrow">Advisory only · Powered by Gemini</span>
+                <h3>✨ AI Recruitment Intelligence</h3>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>
+                  Based on your real database metrics — {metrics.applications} applications, {metrics.drives} drives.
+                </p>
+              </div>
+              {!aiSummary && (
+                <button
+                  className="primary-button btn-sm"
+                  style={{ background: '#7c3aed' }}
+                  onClick={handleAiSummary}
+                  disabled={aiSummaryLoading || metrics.applications === 0}
+                  title={metrics.applications === 0 ? 'No application data yet' : 'Generate AI summary'}
+                >
+                  {aiSummaryLoading ? '✨ Generating…' : '✨ Generate Summary'}
+                </button>
+              )}
+              {aiSummary && (
+                <button className="secondary-button btn-sm" onClick={() => { setAiSummary(null); setAiSummaryError(null) }}>
+                  Refresh
+                </button>
+              )}
+            </div>
+
+            {metrics.applications === 0 && !aiSummary && (
+              <p className="empty-copy">
+                AI summaries are generated from real assessment records. Create a drive, get applications, and run assessments first.
+              </p>
+            )}
+
+            {aiSummaryError && <div className="alert error">{aiSummaryError}</div>}
+
+            {aiSummaryLoading && (
+              <div className="page-state" style={{ minHeight: 60 }}>
+                <div className="loading-spinner" />
+                <span>Calling Gemini — this may take 10–20 seconds…</span>
+              </div>
+            )}
+
+            {aiSummary && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
+                {aiSummary.executive_summary && (
+                  <div style={{
+                    background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.18)',
+                    borderRadius: 10, padding: '14px 18px',
+                  }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 6 }}>
+                      Executive Summary
+                    </div>
+                    <p style={{ fontSize: 13.5, color: 'var(--text-primary)', lineHeight: 1.6, margin: 0 }}>{aiSummary.executive_summary}</p>
+                  </div>
+                )}
+
+                {aiSummary.quality_signal && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 8,
+                      background: 'var(--purple-bg)', color: 'var(--purple)', border: '1px solid rgba(167,139,250,0.25)',
+                    }}>
+                      Quality Signal: {aiSummary.quality_signal}
+                    </span>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  {Array.isArray(aiSummary.funnel_insights) && aiSummary.funnel_insights.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>📊 Funnel Insights</div>
+                      <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {aiSummary.funnel_insights.map((f, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{f}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  {Array.isArray(aiSummary.recommendations) && aiSummary.recommendations.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 6 }}>💡 Recommendations</div>
+                      <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {aiSummary.recommendations.map((r, i) => <li key={i} style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{r}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {Array.isArray(aiSummary.common_weak_areas) && aiSummary.common_weak_areas.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>⚠ Common Weak Areas Across Candidates</div>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {aiSummary.common_weak_areas.map((a, i) => (
+                        <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: '#fee2e2', color: '#991b1b', borderRadius: 6, border: '1px solid #fca5a5' }}>{a}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', margin: 0, fontStyle: 'italic' }}>
+                  {aiSummary.disclaimer || 'AI-generated advisory summary. Final recruitment decisions remain with authorised personnel.'}
+                </p>
+              </div>
+            )}
           </div>
-          <p className="empty-copy">
-            AI summaries are generated only from completed assessment records. No summary is available until this company has real assessment data.
-          </p>
+
+          {/* AI Recruitment Planner */}
+          <div className="ai-panel">
+            <div className="ai-panel-header">
+              <div className="ai-icon">🗺️</div>
+              <div>
+                <div className="ai-panel-title">AI Recruitment Planner</div>
+                <div className="ai-panel-sub">Powered by Gemini · Suggestions require human review before use</div>
+              </div>
+              <button
+                className="secondary-button btn-sm"
+                style={{ marginLeft: 'auto' }}
+                onClick={() => { setShowPlanner(v => !v); setPlannerResult(null); setPlannerError(null) }}
+              >
+                {showPlanner ? '✕ Close Planner' : '✨ Open Planner'}
+              </button>
+            </div>
+
+            {showPlanner && (
+              <div style={{ marginTop: 16 }}>
+                {plannerError && <div className="alert error" style={{ marginBottom: 12 }}>{plannerError}</div>}
+                <div className="form-row">
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Job Role <span>*</span></label>
+                    <input className="form-input" value={plannerForm.role} onChange={e => setPlannerForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Software Engineer" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Required Skills (comma-separated)</label>
+                    <input className="form-input" value={plannerForm.skills} onChange={e => setPlannerForm(f => ({ ...f, skills: e.target.value }))} placeholder="JavaScript, React, DSA" />
+                  </div>
+                </div>
+                <div className="form-row" style={{ marginTop: 12 }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Recruitment Objective</label>
+                    <input className="form-input" value={plannerForm.objective} onChange={e => setPlannerForm(f => ({ ...f, objective: e.target.value }))} placeholder="e.g. Hire 5 strong backend engineers" />
+                  </div>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label">Overall Difficulty</label>
+                    <select className="form-select" value={plannerForm.difficulty} onChange={e => setPlannerForm(f => ({ ...f, difficulty: e.target.value }))}>
+                      <option value="Easy">Easy</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+                <button className="primary-button" style={{ marginTop: 16, background: '#7c3aed' }} onClick={handleAiPlan} disabled={plannerLoading}>
+                  {plannerLoading ? '✨ Planning…' : '✨ Generate Recruitment Plan'}
+                </button>
+                {plannerLoading && <p style={{ fontSize: 12, color: '#6d28d9', marginTop: 8 }}>Calling Gemini — this may take 10–20 seconds…</p>}
+
+                {plannerResult && (
+                  <div style={{ marginTop: 20 }}>
+                    <div className="panel" style={{ marginBottom: 0 }}>
+                      <div className="panel-heading">
+                        <h3>AI Suggested Recruitment Process</h3>
+                        <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Advisory only — review before use</span>
+                      </div>
+
+                      {plannerResult.suggested_eligibility && (
+                        <div style={{ marginBottom: 16 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>Suggested Eligibility</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {plannerResult.suggested_eligibility.min_cgpa && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg, #eff6ff)', color: 'var(--info, #1d4ed8)', borderRadius: 6, border: '1px solid #bfdbfe' }}>Min CGPA: {plannerResult.suggested_eligibility.min_cgpa}</span>}
+                            {plannerResult.suggested_eligibility.max_backlogs != null && <span style={{ fontSize: 11.5, padding: '3px 10px', background: 'var(--info-bg, #eff6ff)', color: 'var(--info, #1d4ed8)', borderRadius: 6, border: '1px solid #bfdbfe' }}>Max Backlogs: {plannerResult.suggested_eligibility.max_backlogs}</span>}
+                            {Array.isArray(plannerResult.suggested_eligibility.allowed_branches) && plannerResult.suggested_eligibility.allowed_branches.map((b, i) => (
+                              <span key={i} style={{ fontSize: 11.5, padding: '3px 10px', background: 'rgba(16,185,129,0.08)', color: '#065f46', borderRadius: 6, border: '1px solid #6ee7b7' }}>{b}</span>
+                            ))}
+                          </div>
+                          {plannerResult.suggested_eligibility.notes && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>{plannerResult.suggested_eligibility.notes}</p>}
+                        </div>
+                      )}
+
+                      {Array.isArray(plannerResult.recruitment_process) && plannerResult.recruitment_process.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8 }}>Suggested Rounds</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {plannerResult.recruitment_process.map((round, i) => (
+                              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 10, padding: '12px 16px' }}>
+                                <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 4 }}>
+                                  <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>Round {round.round_number}: {round.name}</span>
+                                  <span style={{ fontSize: 10.5, padding: '2px 8px', background: 'var(--purple-bg)', color: 'var(--purple)', borderRadius: 5, fontWeight: 700 }}>{round.round_type}</span>
+                                  {round.is_elimination && <span style={{ fontSize: 10.5, padding: '2px 8px', background: '#fee2e2', color: '#991b1b', borderRadius: 5, fontWeight: 700 }}>Elimination</span>}
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                  {round.duration_minutes && `${round.duration_minutes} min`}
+                                  {round.total_questions && ` · ${round.total_questions} questions`}
+                                  {round.passing_percentage && ` · ${round.passing_percentage}% to pass`}
+                                  {round.difficulty && ` · ${round.difficulty}`}
+                                </div>
+                                {round.description && <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>{round.description}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {plannerResult.rationale && (
+                        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 14, fontStyle: 'italic' }}>💡 {plannerResult.rationale}</p>
+                      )}
+                      {plannerResult.estimated_selection_rate && (
+                        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                          Estimated selection rate: {plannerResult.estimated_selection_rate}
+                        </p>
+                      )}
+                    </div>
+
+                    <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 10, fontStyle: 'italic' }}>
+                      This plan is AI-generated and advisory only. Use the "Create Drive" button to manually configure your actual drive using these suggestions.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

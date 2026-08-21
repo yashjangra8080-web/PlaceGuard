@@ -243,14 +243,31 @@ export default function TestPage() {
   }
 
   if (error) {
+    // Distinguish "round locked / not yet available" from other errors
+    const isRoundLocked = /pending|locked|eligib|round|not.*active|not.*available/i.test(error)
     return (
       <div className="test-layout" style={{ alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 12, padding: '28px 36px', maxWidth: 480, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
-          <h2 style={{ color: '#991b1b', marginBottom: 8 }}>Cannot Start Test</h2>
-          <p style={{ color: '#7f1d1d', marginBottom: 20 }}>{error}</p>
-          <button className="secondary-button" onClick={() => navigate(-1)}>← Go Back</button>
-        </div>
+        {isRoundLocked ? (
+          <div style={{ background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: 12, padding: '28px 36px', maxWidth: 500, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
+            <h2 style={{ color: '#1e3a5f', marginBottom: 8 }}>This Round Isn&apos;t Available Yet</h2>
+            <p style={{ color: '#1e40af', marginBottom: 8, lineHeight: 1.6 }}>
+              You can only access this assessment once the previous round has been unlocked.
+              Rounds unlock automatically when you pass the current assessment.
+            </p>
+            <p style={{ fontSize: 12, color: '#64748b', marginBottom: 20 }}>
+              Technical detail: {error}
+            </p>
+            <button className="secondary-button" onClick={() => navigate(-1)}>← Back to My Applications</button>
+          </div>
+        ) : (
+          <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: 12, padding: '28px 36px', maxWidth: 480, textAlign: 'center', fontFamily: 'Inter,sans-serif' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+            <h2 style={{ color: '#991b1b', marginBottom: 8 }}>Cannot Start Test</h2>
+            <p style={{ color: '#7f1d1d', marginBottom: 20 }}>{error}</p>
+            <button className="secondary-button" onClick={() => navigate(-1)}>← Go Back</button>
+          </div>
+        )}
       </div>
     )
   }

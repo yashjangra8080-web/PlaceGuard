@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { getStudentRecord } from '../../services/drives'
 
 function fmt(dateStr) {
   if (!dateStr) return '—'
@@ -32,52 +31,50 @@ export default function StudentResults() {
     let live = true
     async function load() {
       try {
-        const student = await getStudentRecord(profile.id)
-        if (!student) { if (live) setResults([]); return }
-
-        // Query test_attempt_results joined to assessments and drive_rounds
+        // assessment_results is the real table (written by submit_mcq_attempt).
+        // RLS policy: student_profile_id = auth.uid() — only own results visible.
+        // Join path: assessment_results → test_attempts → assessments → drive_rounds → drives → companies
         const { data, error: qErr } = await supabase
-          .from('test_attempt_results')
+          .from('assessment_results')
           .select(`
             id,
             attempt_id,
-            total_questions,
-            correct_answers,
-            incorrect_answers,
-            unanswered,
-            marks_obtained,
-            max_marks,
+            total_score,
+            max_score,
             percentage,
-            passed,
+            correct_count,
+            incorrect_count,
+            unanswered_count,
+            accuracy,
             time_taken_seconds,
-            evaluated_at,
+            passed,
+            computed_at,
+            assessment_id,
             test_attempts!inner(
               id,
-              assessment_id,
               started_at,
               submitted_at,
-              status,
-              assessments!inner(
+              status
+            ),
+            assessments!inner(
+              id,
+              title,
+              drive_round_id,
+              drive_rounds!inner(
                 id,
-                title,
-                drive_round_id,
-                drive_rounds!inner(
+                name,
+                round_type,
+                drive_id,
+                drives!inner(
                   id,
-                  name,
-                  round_type,
-                  drive_id,
-                  drives!inner(
-                    id,
-                    title,
-                    role_name,
-                    companies(company_name)
-                  )
+                  title,
+                  role_name,
+                  companies(company_name)
                 )
               )
             )
           `)
-          .eq('test_attempts.student_id', student.id)
-          .order('evaluated_at', { ascending: false })
+          .order('computed_at', { ascending: false })
 
         if (qErr) throw qErr
         if (live) setResults(data ?? [])
@@ -136,15 +133,15 @@ export default function StudentResults() {
             </thead>
             <tbody>
               {results.map((r) => {
+                // assessment_results has direct FK to both test_attempts and assessments
                 const attempt = r.test_attempts
-                const asmt = attempt?.assessments
+                const asmt = r.assessments          // direct join, not nested under test_attempts
                 const drRound = asmt?.drive_rounds
                 const drive = drRound?.drives
                 const company = drive?.companies?.company_name ?? '—'
                 const pct = r.percentage ?? 0
-                const accuracy = r.total_questions
-                  ? Math.round((r.correct_answers / r.total_questions) * 100)
-                  : 0
+                // accuracy is already computed server-side; use it directly
+                const accuracy = r.accuracy ?? 0
 
                 return (
                   <tr key={r.id}>
@@ -169,9 +166,9 @@ export default function StudentResults() {
                         fontWeight: 800, fontSize: 15,
                         color: pct >= 75 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626',
                       }}>
-                        {r.marks_obtained ?? 0}
+                        {r.total_score ?? 0}
                         <span style={{ fontWeight: 500, fontSize: 11, color: 'var(--text-tertiary)' }}>
-                          /{r.max_marks ?? '?'}
+                          /{r.max_score ?? '?'}
                         </span>
                       </span>
                     </td>
@@ -185,7 +182,7 @@ export default function StudentResults() {
                     </td>
                     <td>
                       <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
-                        {fmt(r.evaluated_at)}
+                        {fmt(r.computed_at)}
                       </span>
                     </td>
                     <td>

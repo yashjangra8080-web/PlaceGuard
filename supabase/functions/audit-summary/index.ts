@@ -1,6 +1,23 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
+
+// GEMINI_API_KEY is stored ONLY in Supabase secrets — never in client code
+async function summariseWithGemini(facts: Record<string, number>, driveTitle: string): Promise<string | null> {
+  const apiKey = Deno.env.get('GEMINI_API_KEY')
+  if (!apiKey) return null
+  try {
+    const { GoogleGenAI } = await import('https://esm.sh/@google/genai@1.38.0')
+    const ai = new GoogleGenAI({ apiKey })
+    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash-lite'
+    const prompt = `Summarise ONLY these verified facts about placement drive "${driveTitle}" in exactly 2 factual sentences. Do NOT add, infer, or alter any numbers. Facts: ${JSON.stringify(facts)}`
+    const response = await ai.models.generateContent({ model, contents: prompt })
+    return response.text?.trim() ?? null
+  } catch {
+    return null
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
@@ -19,10 +36,9 @@ Deno.serve(async (request) => {
       admin.from('applications').select('*', { count: 'exact', head: true }).eq('drive_id', driveId), admin.from('applications').select('*', { count: 'exact', head: true }).eq('drive_id', driveId).eq('status', 'ELIGIBLE'), admin.from('shortlists').select('*', { count: 'exact', head: true }).eq('drive_id', driveId).eq('status', 'SHORTLISTED'), admin.from('shortlist_proposals').select('*', { count: 'exact', head: true }).eq('drive_id', driveId), admin.from('anomaly_alerts').select('*', { count: 'exact', head: true }).eq('drive_id', driveId), admin.from('audit_commits').select('*', { count: 'exact', head: true }).contains('metadata', { drive_id: driveId }).eq('status', 'BLOCKED'),
     ])
     const facts = { applications: applications || 0, eligible: eligible || 0, shortlisted: shortlisted || 0, proposals: proposals || 0, anomalies: anomalies || 0, blocked: blocked || 0 }
-    const apiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!apiKey) return Response.json({ summary: `${drive.title} processed ${facts.applications} applications; ${facts.eligible} were eligible, ${facts.shortlisted} shortlisted, with ${facts.proposals} proposals, ${facts.anomalies} anomalies, and ${facts.blocked} blocked actions.`, facts, generatedBy: 'deterministic-fallback' }, { headers: cors })
-    const response = await fetch('https://api.openai.com/v1/responses', { method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'gpt-4.1-mini', input: `Summarize ONLY these verified JSON facts in 2 factual sentences. Do not add, infer, or alter numbers: ${JSON.stringify(facts)}` }) })
-    if (!response.ok) throw new Error('Summary service is unavailable.')
-    const output = await response.json(); return Response.json({ summary: output.output_text, facts, generatedBy: 'llm' }, { headers: cors })
+    const aiSummary = await summariseWithGemini(facts, drive.title)
+    const summary = aiSummary ??
+      `${drive.title} processed ${facts.applications} applications; ${facts.eligible} were eligible, ${facts.shortlisted} shortlisted, with ${facts.proposals} proposals, ${facts.anomalies} anomalies, and ${facts.blocked} blocked actions.`
+    return Response.json({ summary, facts, generatedBy: aiSummary ? 'gemini' : 'deterministic-fallback' }, { headers: cors })
   } catch (error) { return Response.json({ error: error instanceof Error ? error.message : 'Request failed.' }, { status: 400, headers: cors }) }
 })

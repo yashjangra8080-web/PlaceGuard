@@ -1,3 +1,25 @@
+-- =============================================================================
+-- ⚠  DEV FIXTURE DATA — DO NOT USE FOR PRODUCTION, STAGING, OR DEMO DATABASES ⚠
+-- =============================================================================
+--
+-- This file creates realistic-looking application and round-result records
+-- by directly INSERT-ing rows into `applications` and `application_rounds`
+-- with fabricated statuses (SELECTED, REJECTED, PASSED, FAILED) and scores.
+--
+-- IT INTENTIONALLY BYPASSES the real product RPC chain:
+--   apply_to_drive_result → start_test_attempt → submit_mcq_attempt → evaluate_round
+--
+-- The outcomes here were hand-written, NOT produced by students taking real tests.
+-- They exist purely so engineers can see a populated UI during development.
+--
+-- If you want realistic demo data that flows through the actual RPC pipeline,
+-- use supabase/seed_stage_e_assessments.sql (or a dedicated demo script) instead.
+--
+-- NEVER apply this file to any database where the data will be presented
+-- as real placement results, and never treat it as evidence that the
+-- assessment → round-progression workflow has been tested.
+-- =============================================================================
+
 -- PlaceGuard Stage C+D Seed
 -- Creates student records (CGPA/branch/skills/backlogs) for the 20 dev auth users,
 -- then creates ~70 realistic applications across 5 drives with round results.
