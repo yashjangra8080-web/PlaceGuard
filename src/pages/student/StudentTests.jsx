@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState, useEffect } from 'react'
+=======
+﻿import { useState, useEffect } from 'react'
+>>>>>>> a55c5939068e6a013a6230246074176b6d0c68bc
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getStudentRecord, getStudentApplications } from '../../services/drives'
@@ -22,8 +26,11 @@ function TestCard({ item }) {
   const handleAction = () => {
     if (isSubmitted && resultId) {
       navigate(`/student/test/${assessmentId}/result/${existingAttemptId}`)
+<<<<<<< HEAD
     } else if (roundType === 'CODING') {
       navigate(`/student/coding/${assessmentId}`)
+=======
+>>>>>>> a55c5939068e6a013a6230246074176b6d0c68bc
     } else {
       navigate(`/student/test/${assessmentId}`)
     }

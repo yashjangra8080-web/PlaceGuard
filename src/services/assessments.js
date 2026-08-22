@@ -1,4 +1,4 @@
-﻿import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 const req = () => { if (!supabase) throw new Error('Supabase is not configured.') }
 
@@ -229,77 +229,3 @@ export async function getPendingChangeRequests() {
 }
 
 
-// ── Coding round ───────────────────────────────────────────────────────────────
-
-/** Get the coding problem for an assessment (joined via assessments.id). */
-export async function getCodingProblem(assessmentId) {
-  req()
-  const { data, error } = await supabase
-    .from('coding_problems')
-    .select('id, title, problem_statement, constraints_text, input_format, output_format, sample_input, sample_output, test_cases, allowed_languages, time_limit_ms, memory_limit_mb, max_score')
-    .eq('assessment_id', assessmentId)
-    .maybeSingle()
-  if (error) throw error
-  return data
-}
-
-/** Save (upsert) a coding problem for an assessment. Company-only. */
-export async function upsertCodingProblem({ assessmentId, title, problemStatement, constraintsText, inputFormat, outputFormat, sampleInput, sampleOutput, testCases, allowedLanguages, timeLimitMs, memoryLimitMb, maxScore }) {
-  req()
-  const { data, error } = await supabase
-    .from('coding_problems')
-    .upsert({
-      assessment_id: assessmentId,
-      title,
-      problem_statement: problemStatement,
-      constraints_text: constraintsText ?? '',
-      input_format: inputFormat ?? '',
-      output_format: outputFormat ?? '',
-      sample_input: sampleInput ?? '',
-      sample_output: sampleOutput ?? '',
-      test_cases: testCases ?? [],
-      allowed_languages: allowedLanguages ?? ['python', 'java', 'cpp'],
-      time_limit_ms: timeLimitMs ?? 2000,
-      memory_limit_mb: memoryLimitMb ?? 256,
-      max_score: maxScore ?? 100,
-    }, { onConflict: 'assessment_id' })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-/**
- * Submit a coding attempt. Stores source code in coding_submissions.
- * execution_status is set to 'PENDING_EXTERNAL_CONFIG' because Judge0 is
- * not yet wired. The row is created for audit; the score stays null until
- * the execution engine processes it.
- */
-export async function submitCodingAttempt({ attemptId, problemId, language, sourceCode }) {
-  req()
-  const { data, error } = await supabase
-    .from('coding_submissions')
-    .upsert({
-      attempt_id: attemptId,
-      problem_id: problemId,
-      language,
-      source_code: sourceCode,
-      execution_status: 'PENDING_EXTERNAL_CONFIG',
-    }, { onConflict: 'attempt_id' })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-/** Get an existing coding submission for a test attempt. */
-export async function getCodingSubmission(attemptId) {
-  req()
-  const { data, error } = await supabase
-    .from('coding_submissions')
-    .select('id, language, source_code, execution_status, testcases_total, testcases_passed, testcases_failed, execution_time_ms, score, submitted_at')
-    .eq('attempt_id', attemptId)
-    .maybeSingle()
-  if (error) throw error
-  return data
-}
